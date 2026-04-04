@@ -10,6 +10,8 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 namespace DemoCheats
 {
@@ -19,7 +21,7 @@ namespace DemoCheats
         public const string Description = "A collection of mods for the Car Mechanic Simulator 2026 Demo.";
         public const string Author = "mannly82";
         public const string Company = "The Mann Design";
-        public const string Version = "1.0.0";
+        public const string Version = "1.0.1";
         public const string DownloadLink = "https://github.com/mannly01/DemoCheats/releases/new";
         public const string MelonGameCompany = "Red Dot Games";
         public const string MelonGameName = "Car Mechanic Simulator 2026 Demo";
@@ -35,6 +37,8 @@ namespace DemoCheats
         /// </summary>
         private const string SettingsCatName = "DemoCheatsSettings";
         private readonly MelonPreferences_Category _settings;
+        private readonly string _configFilePath;
+
         /// <summary>
         /// User setting for the key to add money to the player.
         /// </summary>
@@ -83,7 +87,9 @@ namespace DemoCheats
             LogService.Instance.WriteToLog("Called", "ConfigFile.Init");
 #endif
             _settings = MelonPreferences.CreateCategory(SettingsCatName);
-            _settings.SetFilePath("Mods/DemoCheats.cfg");
+            _settings.SetFilePath(Path.Combine("Mods", "DemoCheats.cfg"));
+            _configFilePath = Path.Combine(Directory.GetCurrentDirectory(), "Mods", "DemoCheats.cfg");
+
             _addMoney = _settings.CreateEntry(nameof(AddMoney), KeyCode.F4,
                 description: "Press this key to add the following amount of money to the player.");
             _moneyAmount = _settings.CreateEntry(nameof(MoneyAmount), 1000000,
@@ -97,10 +103,18 @@ namespace DemoCheats
             _toggleDemoWorldLimits = _settings.CreateEntry(nameof(ToggleDemoWorldLimits), KeyCode.F7,
                 description: "Press this key to toggle the demo world limits.");
 
-            if (!File.Exists($"{Directory.GetCurrentDirectory()}\\Mods\\DemoCheats.cfg"))
+            try
             {
-                _settings.SaveToFile();
+                if (!File.Exists(_configFilePath))
+                {
+                    _settings.SaveToFile();
+                }
             }
+            catch (Exception ex)
+            {
+                LogService.Instance.WriteToLog($"Unable to ensure config path: {ex.Message}", "ConfigFile.Init");
+            }
+
 #if DEBUG
             // Logging for debug purposes.
             LogService.Instance.WriteToLog($"AddMoney: {AddMoney}", "ConfigFile.Init");
@@ -156,7 +170,7 @@ namespace DemoCheats
                 return;
             }
             // Save a reference to the current scene.
-            _currentScene = sceneName.ToLower();
+            _currentScene = sceneName?.ToLower() ?? string.Empty;
             if (_currentScene.Equals("christmas") ||
                 _currentScene.Equals("easter") ||
                 _currentScene.Equals("halloween"))
@@ -181,7 +195,7 @@ namespace DemoCheats
                     if (target != null)
                     {
 #if DEBUG
-                        LogService.Instance.WriteToLog($"Found GameObject{GetGameObjectPath(target)}");
+                        LogService.Instance.WriteToLog($"Found GameObject {GetGameObjectPath(target)}");
 #endif
                         switch (name)
                         {
@@ -214,8 +228,16 @@ namespace DemoCheats
         /// </summary>
         public void AdjustGameSpeed()
         {
-            Time.timeScale = _configFile.GameSpeed;
-            Singleton<UIManager>.Instance.ShowPopup($"Game Speed set to {_configFile.GameSpeed}.", PopupType.Normal);
+            if (_configFile == null)
+            {
+                LogService.Instance.WriteToLog("Config file missing - cannot adjust game speed");
+                return;
+            }
+
+            // Clamp to a sensible range to avoid breaking physics badly.
+            float clamped = Mathf.Clamp(_configFile.GameSpeed, 0.1f, 2.0f);
+            Time.timeScale = clamped;
+            Singleton<UIManager>.Instance.ShowPopup($"Game Speed set to {clamped}.", PopupType.Normal);
         }
 
         /// <summary>
@@ -224,6 +246,8 @@ namespace DemoCheats
         private void RefreshUPM()
         {
             var windowManager = WindowManager.Instance;
+            if (windowManager == null) return;
+
             if (windowManager.activeWindows.count > 0 &&
                 windowManager.IsWindowActive(WindowID.Shop))
             {
@@ -243,16 +267,13 @@ namespace DemoCheats
                         usedPartsManager.GenerateParts();
                     }
                     var partsPage = shopWindow.partsPage;
-                    if (partsPage != null)
+                    if (partsPage != null && partsPage.ShopType == ShopType25.UsedParts)
                     {
-                        if (partsPage.ShopType == ShopType25.UsedParts)
-                        {
 #if DEBUG
-                            LogService.Instance.WriteToLog($"Used Parts Page Active");
+                        LogService.Instance.WriteToLog($"Used Parts Page Active");
 #endif
-                            partsPage.UpdateItems();
-                            LogService.Instance.WriteToLog("Refreshed Used Parts Market");
-                        }
+                        partsPage.UpdateItems();
+                        LogService.Instance.WriteToLog("Refreshed Used Parts Market");
                     }
                 }
             }
@@ -265,6 +286,8 @@ namespace DemoCheats
         private void ToggleUPM()
         {
             var windowManager = WindowManager.Instance;
+            if (windowManager == null) return;
+
             if (windowManager.activeWindows.count > 0 &&
                 windowManager.IsWindowActive(WindowID.Shop))
             {
@@ -280,15 +303,19 @@ namespace DemoCheats
                         }
                         else
                         {
-                            List<Il2CppContainers.UsedPartsShopItem> toDelete = new List<Il2CppContainers.UsedPartsShopItem>();
+                            List<Il2CppContainers.UsedPartsShopItem> itemsToKeep = new List<Il2CppContainers.UsedPartsShopItem>();
                             var items = usedPartsManager.itemsPool;
-                            for (int i = 0; i < items.Count; i++)
+                            if (items != null)
                             {
-                                var item = items[i];
-                                if (!item.ItemId.ToLower().Contains("dnb"))
+                                for (int i = 0; i < items.Count; i++)
                                 {
-                                    toDelete.Add(item);
+                                    var item = items[i];
+                                    if (item != null && item.ItemId != null && item.ItemId.ToLower().Contains("dnb"))
+                                    {
+                                        itemsToKeep.Add(item);
+                                    }
                                 }
+
 #if DEBUG
                                 //else
                                 //{
@@ -314,10 +341,13 @@ namespace DemoCheats
                                 //                                "car_dnbcensor-bumper_front",
                                 //                                "car_dnbcensor-hood2" };
 #endif
-                            }
-                            foreach (var item in toDelete)
-                            {
-                                items.Remove(item);
+
+                                // Replace items pool contents with the filtered list
+                                items.Clear();
+                                foreach (var keep in itemsToKeep)
+                                {
+                                    items.Add(keep);
+                                }
                             }
                         }
                         usedPartsManager.GenerateParts();
@@ -325,16 +355,13 @@ namespace DemoCheats
                         LogService.Instance.WriteToLog("Toggled Used Parts Market");
                     }
                     var partsPage = shopWindow.partsPage;
-                    if (partsPage != null)
+                    if (partsPage != null && partsPage.ShopType == ShopType25.UsedParts)
                     {
-                        if (partsPage.ShopType == ShopType25.UsedParts)
-                        {
 #if DEBUG
-                            LogService.Instance.WriteToLog($"Used Parts Page Active");
+                        LogService.Instance.WriteToLog($"Used Parts Page Active");
 #endif
-                            partsPage.UpdateItems();
-                            LogService.Instance.WriteToLog("Refreshed Used Parts Market");
-                        }
+                        partsPage.UpdateItems();
+                        LogService.Instance.WriteToLog("Refreshed Used Parts Market");
                     }
                 }
             }
@@ -378,10 +405,12 @@ namespace DemoCheats
                 CheckIfInputIsFocused();
             }
 #endif
+            if (_configFile == null) return;
+
             if (Input.GetKeyDown(_configFile.AddMoney))
             {
                 // Check if a window is open and show the user a message to close it first.
-                if (Singleton<WindowManager>.Instance.activeWindows.count > 0)
+                if (Singleton<WindowManager>.Instance?.activeWindows.count > 0)
                 {
                     Singleton<UIManager>.Instance.ShowPopup($"Please close any open windows first.", PopupType.Normal);
                 }
@@ -390,12 +419,12 @@ namespace DemoCheats
                     // Get a reference to the Shared Game Data Manager.
                     var sharedGameDataManager = SharedGameDataManager.Instance;
 #if DEBUG
-                    LogService.Instance.WriteToLog($"Original Money: {sharedGameDataManager.money}");
+                    LogService.Instance.WriteToLog($"Original Money: {sharedGameDataManager?.money}");
 #endif
                     // Adds the money amount in the config file to the player.
-                    sharedGameDataManager.AddMoneyRpc(_configFile.MoneyAmount);
+                    sharedGameDataManager?.AddMoneyRpc(_configFile.MoneyAmount);
 #if DEBUG
-                    LogService.Instance.WriteToLog($"New Money: {sharedGameDataManager.money}");
+                    LogService.Instance.WriteToLog($"New Money: {sharedGameDataManager?.money}");
                     //LogService.Instance.WriteToLog($"Inv Size Multi: {sharedGameDataManager.inventorySizeMultiplier}");
                     //sharedGameDataManager.inventorySizeMultiplier = 5;
                     //LogService.Instance.WriteToLog($"New Inv Size Multi: {sharedGameDataManager.inventorySizeMultiplier}");
@@ -454,54 +483,32 @@ namespace DemoCheats
         /// <returns>(bool) True if the Search/Input Field is being used.</returns>
         private bool CheckIfInputIsFocused()
         {
-            //            var inputFields = GameObject.FindObjectsOfType<InputField>();
-            //            foreach (var inputField in inputFields)
-            //            {
-            //                if (inputField != null)
-            //                {
-            //                    if (inputField.isFocused)
-            //                    {
-            //#if DEBUG
-            //                        MelonLogger.Msg("Input Field Focused");
-            //#endif
-            //                        return true;
-            //                    }
-            //                }
-            //            }
-            //var activeGO = EventSystem.current.currentSelectedGameObject;
-            //if (activeGO != null)
-            //{
-            //    var inputField = activeGO.GetComponent<InputField>();
-            //    if (inputField != null)
-            //    {
-            //        MelonLogger.Msg("GO InputField Active");
-            //        return true;
-            //    }
-            //}
-            //var activeInput = EventSystem.current.currentInputModule;
-            //if (activeInput != null)
-            //{
-            //    var inputField = activeInput.GetComponent<InputField>();
-            //    if (inputField != null)
-            //    {
-            //        MelonLogger.Msg("IM InputField Active");
-            //        return true;
-            //    }
-            //}
-            //var gameManager = GameManager.Instance;
-            //var inputManager = gameManager.InputManager;
-            //if (inputManager == null)
-            //{
-            //    if (inputManager.IsUICommonEnabled())
-            //    {
-            //        MelonLogger.Msg("UI Common Input Enabled");
-            //        var uiCommonActions = inputManager.GetUICommon();
-            //        if (uiCommonActions != null) {
-            //            MelonLogger.Msg("UI Common Actions Enabled");
-            //        }
-            //    }
-            //}
+            try
+            {
+                var evt = EventSystem.current;
+                if (evt != null)
+                {
+                    var activeGO = evt.currentSelectedGameObject;
+                    if (activeGO != null)
+                    {
+                        // Check for legacy InputField
+                        if (activeGO.GetComponent<InputField>()?.isFocused == true)
+                            return true;
 
+                        // If TMP is used, it often exposes TMP_InputField type; do a safer type-name check
+                        var tmpComp = activeGO.GetComponent("TMP_InputField");
+                        if (tmpComp != null)
+                        {
+                            // assume TMP input is focused when selected
+                            return true;
+                        }
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                // Keep silent - on some builds some APIs might be unavailable; default to not focused.
+            }
             return false;
         }
     }
@@ -511,30 +518,48 @@ namespace DemoCheats
     /// </summary>
     public class LogService
     {
-        // A static reference to the service.
-        private static LogService _instance;
-        public static LogService Instance => _instance ?? (_instance = new LogService());
+        // Thread-safe lazy singleton.
+        private static readonly Lazy<LogService> _lazyInstance = new Lazy<LogService>(() => new LogService());
+        public static LogService Instance => _lazyInstance.Value;
 
         // The path to the log file.
         private string _logFilePath = string.Empty;
         // A list of strings to write to the log file.
         private readonly List<string> _logs = new List<string>();
+        // A sync lock for thread-safety.
+        private readonly object _sync = new object();
+
         // A public reference to the log count.
         // This will be used when the mod closes to write any pending logs.
-        public int LogCount => _logs.Count;
+        public int LogCount
+        {
+            get { lock (_sync) { return _logs.Count; } }
+        }
 
         public void Initialize(string fileName)
         {
-            // Create a DateTime string to log.
-            string logDate = DateTime.Now.ToString("MM-dd-yyyy HH:mm:ss");
-            // Create the log file path string.
-            _logFilePath = $"{Directory.GetCurrentDirectory()}\\Mods\\{fileName}.log";
-            // Create the log file and write some initial information to it.
-            // Example:
-            // {fileName} - 1.0.0
-            // CMS 2026 Demo - 1.0.1
-            // Log Created: 01-01-2024 00:00:01
-            File.WriteAllLines(_logFilePath, new List<string> { $"{BuildInfo.Name} - {BuildInfo.Version}", $"CMS 2026 Demo - {Il2Cpp.GameSettings.BuildVersion}", $"Log Created: {logDate}" });
+            try
+            {
+                // Create a DateTime string to log.
+                string logDate = DateTime.Now.ToString("MM-dd-yyyy HH:mm:ss");
+                // Create the log file path string.
+                _logFilePath = Path.Combine(Directory.GetCurrentDirectory(), "Mods", $"{fileName}.log");
+                // Ensure directory exists
+                var dir = Path.GetDirectoryName(_logFilePath);
+                if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                    Directory.CreateDirectory(dir);
+
+                // Create the log file and write some initial information to it.
+                File.WriteAllLines(_logFilePath, new List<string> { $"{BuildInfo.Name} - {BuildInfo.Version}", $"CMS 2026 Demo - {Il2Cpp.GameSettings.BuildVersion}", $"Log Created: {logDate}" });
+            }
+            catch (Exception ex)
+            {
+                // In case logging initialization fails, keep using in-memory buffer.
+                _logFilePath = string.Empty;
+#if DEBUG
+                MelonLogger.Msg($"LogService.Initialize failed: {ex.Message}");
+#endif
+            }
         }
 
         /// <summary>
@@ -544,52 +569,43 @@ namespace DemoCheats
         /// <param name="callerName">The method that the log is being created.</param>
         public void WriteToLog(string message, [CallerMemberName] string callerName = "")
         {
-            // Create the log string with DateTime, Calling Method and Message string.
             var logString = $"{DateTime.Now:HH:mm:ss}\t{callerName}\t{message}.";
-            // Add the string to the list of messsage.
-            // This is done in case the file cannot be written to (it is not async).
-            _logs.Add(logString);
-            // Check that the log string is not empty.
-            if (!string.IsNullOrWhiteSpace(_logFilePath))
+
+#if DEBUG
+            MelonLogger.Msg(message);
+#endif
+
+            lock (_sync)
             {
-                // Check that the log file exists.
-                if (File.Exists(_logFilePath))
+                _logs.Add(logString);
+
+                if (string.IsNullOrWhiteSpace(_logFilePath))
                 {
-                    // Try to append the log strings to the log file
-                    // and then clear the log string list.
-                    try
+                    // Not initialized yet; retain in buffer.
+                    return;
+                }
+
+                try
+                {
+                    if (File.Exists(_logFilePath))
                     {
                         File.AppendAllLines(_logFilePath, _logs);
                         _logs.Clear();
                     }
-                    catch (Exception)
+                    else
                     {
-                        // The strings could not be written to the file.
-                        // This is usually caused by a lock on the file
-                        // (if it is currently being written to).
-                        // Add them to the list and they will be written next time.
-                        _logs.Add($"{DateTime.Now:HH:mm:ss}\tLogService.WriteToLog: Unable to write to log.");
-                        _logs.Add(logString);
+                        // recreate file if missing
+                        File.WriteAllLines(_logFilePath, new[] { $"{BuildInfo.Name} - {BuildInfo.Version}", $"CMS 2026 Demo - {Il2Cpp.GameSettings.BuildVersion}", $"Log Created: {DateTime.Now:MM-dd-yyyy HH:mm:ss}" });
+                        File.AppendAllLines(_logFilePath, _logs);
+                        _logs.Clear();
                     }
                 }
-                else
+                catch (Exception ex)
                 {
-                    // The log file was not found.
-                    // This should not happen.
-                    _logs.Add($"{DateTime.Now:HH:mm:ss}\tLogService.WriteToLog: Log file not found.");
-                    _logs.Add(logString);
+                    // If it fails, keep entries in _logs for next attempt
+                    _logs.Add($"{DateTime.Now:HH:mm:ss}\tLogService.WriteToLog: Unable to write to log: {ex.Message}");
                 }
             }
-            else
-            {
-                // The log file path was empty.
-                // This should not happen.
-                _logs.Add($"{DateTime.Now:HH:mm:ss}\tLogService.WriteToLog: Log file not initialized.");
-                _logs.Add(logString);
-            }
-#if DEBUG
-            MelonLogger.Msg(message);
-#endif
         }
     }
 }
