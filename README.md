@@ -1,42 +1,53 @@
-# DEMO CHEATS - 1.0.0
-A collection of mods for the Car Mechanic Simulator 2026 Demo.
+# DEMO CHEATS - 1.0.1
+A collection of cheats for the Car Mechanic Simulator 2026 Demo.
 
 ## REQUIREMENTS
 * [MelonLoader 0.7.2](https://github.com/LavaGang/MelonLoader/releases/tag/v0.7.2)
 
+## UPDATE - 1.0.1
+* Fixed a label on the menu that read "Used Car Market" instead of "Used Parts" Market
+
 ## FEATURES
-* Add a configured amount of money to the player
-* Refresh the Used Parts Market immediately with a key press
+* Add a configured amount of money and XP to the player
+* Add skill points to the player
+* Toggle fast mounting of parts
+* Change the Game Speed, Player Walk Speed and Player Run Speed
+* Paint the car and wheels an approved factory color by looping through the available ones
+* Repair the body parts to 100% when looking at a car
+* Spawn the 5 available Demo cars (with or w/o random condition)
+* **Maximum 10 cars allowed in the Demo**
+* Refresh the Used Parts Market immediately
 * Toggle showing only the DNB Censor car parts in the Used Parts Market
-* Change the Game Speed
 * Toggle the Demo World Limits to view more of the map
+* Delete a car
 
 ## DEFAULT KEYS
-* F4: Adds configured amount of money to the player
-* F5: Refresh the Used Parts Market
-* F6: Turn ON/OFF the misc. car parts, leaving only the DNB Censor ones and refresh the UPM
-* F7: Toggle the Demo World limits
+* R: Opens the Demo Cheats menu
+* None: Cycle through the factory colors and paint the car
+* None: Repair the body parts to 100%
 
 ## DEFAULT SETTINGS (DemoCheats.cfg)
-* AddMoney: F4
+* OpenCheatMenu: R
+* PaintCar: None
+* RepairBody: None
 * MoneyAmount: 1000000
-* GameSpeed: 1.0 (1.0-2.0 with 1.5 recommended)
-* RefreshUPM: F5
-* ToggleUPM: F6
-* ToggleDemoWorldLimits: F7
+* XPAMount: 1000
+* GameSpeedRate: 0.25
+* RandomPartConditionOnSpawn: true (false = 100%)
 - [Keycode Values](https://docs.unity3d.com/ScriptReference/KeyCode.html)
 
 ## INSTALLATION (Same as all other MelonLoader mods)
 * Install [MelonLoader 0.7.2](https://github.com/LavaGang/MelonLoader/releases/tag/v0.7.2) (MelonLoader.Installer.exe recommended)
-* Download .zip from [Releases](https://github.com/mannly01/MoneyCheat/releases/latest) page
+* Download .zip from [Releases](https://github.com/mannly01/DemoCheats/releases/latest) page
 * Unzip the DemoCheats.dll file to Car Mechanic Simulator 2026 Demo\Mods folder
 * **The DemoCheats.cfg file is optional but will allow you to edit the default settings**
 - Default Folder: \SteamLibrary\steamapps\common\Car Mechanic Simulator 2026 Demo\Mods\
 
 ## KNOWN ISSUES
-* View [Issues Section](https://github.com/mannly01/DemoCheat/issues)
+* View [Issues Section](https://github.com/mannly01/DemoCheats/issues)
 
 ## CREDITS
 Thanks to the following developers:
-* [tk3r](https://www.nexusmods.com/profile/tk3r/mods?gameId=3957)
-* [MeitziQ](https://www.nexusmods.com/profile/MeitziQ/mods?gameId=3957)
+* [iBlaster](https://www.nexusmods.com/profile/iBlaster/mods)
+* [TK3R](https://www.nexusmods.com/profile/tk3r/mods)
+* [MeitziQ](https://www.nexusmods.com/profile/MeitziQ/mods)

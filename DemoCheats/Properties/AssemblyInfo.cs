@@ -4,7 +4,7 @@ using System.Resources;
 using System.Runtime.InteropServices;
 
 [assembly: AssemblyTitle(DemoCheats.BuildInfo.Name)]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription(DemoCheats.BuildInfo.Description)]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany(DemoCheats.BuildInfo.Company)]
 [assembly: AssemblyProduct(DemoCheats.BuildInfo.Name)]
@@ -17,4 +17,4 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyFileVersion(DemoCheats.BuildInfo.Version)]
 [assembly: NeutralResourcesLanguage("en")]
 [assembly: MelonInfo(typeof(DemoCheats.DemoCheats), DemoCheats.BuildInfo.Name, DemoCheats.BuildInfo.Version, DemoCheats.BuildInfo.Author, DemoCheats.BuildInfo.DownloadLink)]
-[assembly: MelonGame(null, null)]
+[assembly: MelonGame(DemoCheats.BuildInfo.MelonGameCompany, DemoCheats.BuildInfo.MelonGameName)]

@@ -1,5 +1,7 @@
 ﻿using Il2Cpp;
-using Il2CppCMS.Shared;
+using Il2CppCMS.Core;
+using Il2CppCMS.Core.Car;
+using Il2CppCMS.Core.Car.Containers;
 using Il2CppCMS.UI;
 using Il2CppCMS.UI.Logic;
 using Il2CppCMS.UI.Windows;
@@ -18,11 +20,11 @@ namespace DemoCheats
     public static class BuildInfo
     {
         public const string Name = "Demo Cheats";
-        public const string Description = "A collection of mods for the Car Mechanic Simulator 2026 Demo.";
+        public const string Description = "A collection of cheats for the Car Mechanic Simulator 2026 Demo.";
         public const string Author = "mannly82";
         public const string Company = "The Mann Design";
         public const string Version = "1.0.1";
-        public const string DownloadLink = "https://github.com/mannly01/DemoCheats/releases/new";
+        public const string DownloadLink = "https://www.nexusmods.com/carmechanicsimulator2026/mods/6";
         public const string MelonGameCompany = "Red Dot Games";
         public const string MelonGameName = "Car Mechanic Simulator 2026 Demo";
     }
@@ -40,12 +42,22 @@ namespace DemoCheats
         private readonly string _configFilePath;
 
         /// <summary>
-        /// User setting for the key to add money to the player.
+        /// User setting for the key to open the cheat menu.
         /// </summary>
-        public KeyCode AddMoney => _addMoney.Value;
-        private readonly MelonPreferences_Entry<KeyCode> _addMoney;
+        public KeyCode OpenCheatMenu => _openCheatMenu.Value;
+        private readonly MelonPreferences_Entry<KeyCode> _openCheatMenu;
         /// <summary>
-        /// User setting for the amount of money to add.
+        /// User setting for the key to paint the car that the user is looking at.
+        /// </summary>
+        public KeyCode PaintCar => _paintCar.Value;
+        private readonly MelonPreferences_Entry<KeyCode> _paintCar;
+        /// <summary>
+        /// User setting for the key to repair the body parts to 100%.
+        /// </summary>
+        public KeyCode RepairBody => _repairBody.Value;
+        private readonly MelonPreferences_Entry<KeyCode> _repairBody;
+        /// <summary>
+        /// User setting for the amount of money to add to the player.
         /// </summary>
         public int MoneyAmount
         {
@@ -54,29 +66,32 @@ namespace DemoCheats
         }
         private readonly MelonPreferences_Entry<int> _moneyAmount;
         /// <summary>
-        /// User setting for the game speed.
+        /// User setting for the amount of XP to add to the player.
         /// </summary>
-        public float GameSpeed
+        public int XPAmount
         {
-            get => _gameSpeed.Value;
-            set { _gameSpeed.Value = value; }
+            get => _xpAmount.Value;
+            set { _xpAmount.Value = value; }
         }
-        private readonly MelonPreferences_Entry<float> _gameSpeed;
+        private readonly MelonPreferences_Entry<int> _xpAmount;
         /// <summary>
-        /// User setting for the key to refresh the Used Parts Market (UPM).
+        /// User setting for game speed adjustment rate.
         /// </summary>
-        public KeyCode RefreshUPM => _refreshUPM.Value;
-        private readonly MelonPreferences_Entry<KeyCode> _refreshUPM;
+        public float GameSpeedRate
+        {
+            get => _gameSpeedRate.Value;
+            set { _gameSpeedRate.Value = value; }
+        }
+        private readonly MelonPreferences_Entry<float> _gameSpeedRate;
         /// <summary>
-        /// Uwer setting for the key to toggle the DNB Censor parts in the UPM.
+        /// User setting for the spawning of cars with random part condition.
         /// </summary>
-        public KeyCode ToggleUPM => _toggleUPM.Value;
-        private readonly MelonPreferences_Entry<KeyCode> _toggleUPM;
-        /// <summary>
-        /// User setting for the key to toggle demo world limits
-        /// </summary>
-        public KeyCode ToggleDemoWorldLimits => _toggleDemoWorldLimits.Value;
-        private readonly MelonPreferences_Entry<KeyCode> _toggleDemoWorldLimits;
+        public bool RandomPartConditionOnSpawn
+        {
+            get => _randomPartConditionOnSpawn.Value;
+            set { _randomPartConditionOnSpawn.Value = value; }
+        }
+        private readonly MelonPreferences_Entry<bool> _randomPartConditionOnSpawn;
 
         /// <summary>
         /// Implementation of Settings properties.
@@ -90,18 +105,20 @@ namespace DemoCheats
             _settings.SetFilePath(Path.Combine("Mods", "DemoCheats.cfg"));
             _configFilePath = Path.Combine(Directory.GetCurrentDirectory(), "Mods", "DemoCheats.cfg");
 
-            _addMoney = _settings.CreateEntry(nameof(AddMoney), KeyCode.F4,
-                description: "Press this key to add the following amount of money to the player.");
+            _openCheatMenu = _settings.CreateEntry(nameof(OpenCheatMenu), KeyCode.R,
+                description: "Press this key to open the cheat menu.");
+            _paintCar = _settings.CreateEntry(nameof(PaintCar), KeyCode.None,
+                description: "Set this to a key to rotate through the factory colors and paint the car you are looking at");
+            _repairBody = _settings.CreateEntry(nameof(RepairBody), KeyCode.None,
+                description: "Set this to a key to repair the body parts to 100%");
             _moneyAmount = _settings.CreateEntry(nameof(MoneyAmount), 1000000,
                 description: "The amount of money to add to the player.");
-            _gameSpeed = _settings.CreateEntry(nameof(GameSpeed), 1.0f,
-                description: "Sets the Game Speed of the Unity Engine (1.0-2.0, 1.5 is recommended max).");
-            _refreshUPM = _settings.CreateEntry(nameof(RefreshUPM), KeyCode.F5,
-                description: "Press this key to refresh the Used Parts Market immediately.");
-            _toggleUPM = _settings.CreateEntry(nameof(ToggleUPM), KeyCode.F6,
-                description: "Press this key to show only the DNB Censor car parts in the Used Parts Market.");
-            _toggleDemoWorldLimits = _settings.CreateEntry(nameof(ToggleDemoWorldLimits), KeyCode.F7,
-                description: "Press this key to toggle the demo world limits.");
+            _xpAmount = _settings.CreateEntry(nameof(XPAmount), 1000,
+                description: "The amount of XP to add to the player.");
+            _gameSpeedRate = _settings.CreateEntry(nameof(GameSpeedRate), 0.25f,
+                description: "Sets the the rate at which the game speed will be adjusted when using the Game Speed-/+ cheats.");
+            _randomPartConditionOnSpawn = _settings.CreateEntry(nameof(RandomPartConditionOnSpawn), true,
+                description: "Sets whether cars will spawn with random condition, false = 100% condition.");
 
             try
             {
@@ -117,12 +134,13 @@ namespace DemoCheats
 
 #if DEBUG
             // Logging for debug purposes.
-            LogService.Instance.WriteToLog($"AddMoney: {AddMoney}", "ConfigFile.Init");
+            LogService.Instance.WriteToLog($"AddMoney: {OpenCheatMenu}", "ConfigFile.Init");
+            LogService.Instance.WriteToLog($"Paint Car: {PaintCar}");
+            LogService.Instance.WriteToLog($"Repair Body: {RepairBody}");
             LogService.Instance.WriteToLog($"MoneyAmount: {MoneyAmount}", "ConfigFile.Init");
-            LogService.Instance.WriteToLog($"GameSpeed: {GameSpeed}", "ConfigFile.Init");
-            LogService.Instance.WriteToLog($"RefreshUPM: {RefreshUPM}", "ConfigFile.Init");
-            LogService.Instance.WriteToLog($"ToggleUPM: {ToggleUPM}", "ConfigFile.Init");
-            LogService.Instance.WriteToLog($"ToggleDemoWorldLimits: {ToggleDemoWorldLimits}", "ConfigFile.Init");
+            LogService.Instance.WriteToLog($"XPAmount: {XPAmount}", "ConfigFile.Init");
+            LogService.Instance.WriteToLog($"GameSpeedRate: {GameSpeedRate}", "ConfigFile.Init");
+            LogService.Instance.WriteToLog($"RandomPartConditionOnSpawn: {RandomPartConditionOnSpawn}", "ConfigFile.Init");
 #endif
         }
     }
@@ -132,26 +150,14 @@ namespace DemoCheats
         /// <summary>
         /// Reference to Settings file.
         /// </summary>
-        private DemoCheatsConfigFile _configFile;
+        private static DemoCheatsConfigFile _configFile;
+        public static DemoCheatsConfigFile GetConfigFile() { return _configFile; }
 
         /// <summary>
         /// Global reference to the current scene.
         /// </summary>
-        private string _currentScene = string.Empty;
-
-        /// <summary>
-        /// Variable to store whether the user want to see just DNB Censor parts.
-        /// </summary>
-        private bool _onlyDNBParts = false;
-
-        /// <summary>
-        /// References to the demo world limit game objects.
-        /// </summary>
-        private bool _demoLimitsActive = true;
-        private GameObject _demoWallsGO = null;
-        private GameObject _garage_Exterior_Demo_ColliderGO = null;
-        private GameObject _garage_Exterior_Demo_Wall_Blocked_1GO = null;
-        private GameObject _demoVehiclesDetectorGO = null;
+        private static string _currentScene = string.Empty;
+        public static string GetCurrentScene() { return _currentScene; }
 
         public override void OnInitializeMelon()
         {
@@ -200,16 +206,16 @@ namespace DemoCheats
                         switch (name)
                         {
                             case "DemoWalls":
-                                _demoWallsGO = target;
+                                Helpers.DemoWallsGO = target;
                                 break;
                             case "Garage_Exterior_Demo_Collider":
-                                _garage_Exterior_Demo_ColliderGO = target;
+                                Helpers.Garage_Exterior_Demo_ColliderGO = target;
                                 break;
                             case "Garage_Exterior_Demo_Wall_Blocked_1":
-                                _garage_Exterior_Demo_Wall_Blocked_1GO = target;
+                                Helpers.Garage_Exterior_Demo_Wall_Blocked_1GO = target;
                                 break;
                             case "DemoVehiclesDetector":
-                                _demoVehiclesDetectorGO = target;
+                                Helpers.DemoVehiclesDetectorGO = target;
                                 break;
                         }
                     }
@@ -223,241 +229,118 @@ namespace DemoCheats
             }
         }
 
-        /// <summary>
-        /// Adjusts the game speed based on the value in the config file.
-        /// </summary>
-        public void AdjustGameSpeed()
-        {
-            if (_configFile == null)
-            {
-                LogService.Instance.WriteToLog("Config file missing - cannot adjust game speed");
-                return;
-            }
-
-            // Clamp to a sensible range to avoid breaking physics badly.
-            float clamped = Mathf.Clamp(_configFile.GameSpeed, 0.1f, 2.0f);
-            Time.timeScale = clamped;
-            Singleton<UIManager>.Instance.ShowPopup($"Game Speed set to {clamped}.", PopupType.Normal);
-        }
-
-        /// <summary>
-        /// Refreshes the Used Parts Market parts list and updates the parts page.
-        /// </summary>
-        private void RefreshUPM()
-        {
-            var windowManager = WindowManager.Instance;
-            if (windowManager == null) return;
-
-            if (windowManager.activeWindows.count > 0 &&
-                windowManager.IsWindowActive(WindowID.Shop))
-            {
-                var shopWindow = windowManager.GetWindowByID<ShopWindow25>(WindowID.Shop);
-                if (shopWindow != null)
-                {
-                    //LogService.Instance.WriteToLog("Shop Window Active");
-                    //var currentShopType = shopWindow.currentShopType;
-                    //LogService.Instance.WriteToLog($"Current ShopType: {currentShopType}");
-                    //if (currentShopType == ShopType25.UsedParts)
-                    //{
-                    //    LogService.Instance.WriteToLog($"Used Parts Page Active");
-                    //}
-                    var usedPartsManager = shopWindow.usedPartsShopManager;
-                    if (usedPartsManager != null)
-                    {
-                        usedPartsManager.GenerateParts();
-                    }
-                    var partsPage = shopWindow.partsPage;
-                    if (partsPage != null && partsPage.ShopType == ShopType25.UsedParts)
-                    {
-#if DEBUG
-                        LogService.Instance.WriteToLog($"Used Parts Page Active");
-#endif
-                        partsPage.UpdateItems();
-                        LogService.Instance.WriteToLog("Refreshed Used Parts Market");
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Toggles off any car parts that aren't the DNB Censor and then
-        /// refreshes the Used Parts Market parts list and updates the parts page.
-        /// </summary>
-        private void ToggleUPM()
-        {
-            var windowManager = WindowManager.Instance;
-            if (windowManager == null) return;
-
-            if (windowManager.activeWindows.count > 0 &&
-                windowManager.IsWindowActive(WindowID.Shop))
-            {
-                var shopWindow = windowManager.GetWindowByID<ShopWindow25>(WindowID.Shop);
-                if (shopWindow != null)
-                {
-                    var usedPartsManager = shopWindow.usedPartsShopManager;
-                    if (usedPartsManager != null)
-                    {
-                        if (_onlyDNBParts)
-                        {
-                            usedPartsManager.InitializeItemsPool();
-                        }
-                        else
-                        {
-                            List<Il2CppContainers.UsedPartsShopItem> itemsToKeep = new List<Il2CppContainers.UsedPartsShopItem>();
-                            var items = usedPartsManager.itemsPool;
-                            if (items != null)
-                            {
-                                for (int i = 0; i < items.Count; i++)
-                                {
-                                    var item = items[i];
-                                    if (item != null && item.ItemId != null && item.ItemId.ToLower().Contains("dnb"))
-                                    {
-                                        itemsToKeep.Add(item);
-                                    }
-                                }
-
-#if DEBUG
-                                //else
-                                //{
-                                //    LogService.Instance.WriteToLog(item.ItemId);
-                                //}
-                                // The following is the output from the above line.
-                                //var parts = new List<string>() { "car_dnbcensor-bumper_front2",
-                                //                                "car_dnbcensor-mirror_right",
-                                //                                "car_dnbcensor-mirror_left",
-                                //                                "car_dnbcensor-sideskirt_right2",
-                                //                                "car_dnbcensor-bumper_rear",
-                                //                                "car_dnbcensor-door_front_left",
-                                //                                "car_dnbcensor-sideskirt_left",
-                                //                                "car_dnbcensor-door_front_right",
-                                //                                "car_dnbcensor-bed_cover_openable",
-                                //                                "car_dnbcensor-fender_front_right",
-                                //                                "car_dnbcensor-fender_front_left",
-                                //                                "car_dnbcensor-bumper_rear2",
-                                //                                "car_dnbcensor-sideskirt_right",
-                                //                                "car_dnbcensor-trunk",
-                                //                                "car_dnbcensor-sideskirt_left2",
-                                //                                "car_dnbcensor-hood",
-                                //                                "car_dnbcensor-bumper_front",
-                                //                                "car_dnbcensor-hood2" };
-#endif
-
-                                // Replace items pool contents with the filtered list
-                                items.Clear();
-                                foreach (var keep in itemsToKeep)
-                                {
-                                    items.Add(keep);
-                                }
-                            }
-                        }
-                        usedPartsManager.GenerateParts();
-                        _onlyDNBParts = !_onlyDNBParts;
-                        LogService.Instance.WriteToLog("Toggled Used Parts Market");
-                    }
-                    var partsPage = shopWindow.partsPage;
-                    if (partsPage != null && partsPage.ShopType == ShopType25.UsedParts)
-                    {
-#if DEBUG
-                        LogService.Instance.WriteToLog($"Used Parts Page Active");
-#endif
-                        partsPage.UpdateItems();
-                        LogService.Instance.WriteToLog("Refreshed Used Parts Market");
-                    }
-                }
-            }
-        }
-
-        private void ToggleDemoWorldLimits()
-        {
-            _demoLimitsActive = !_demoLimitsActive;
-            if (_demoWallsGO != null)
-            {
-                _demoWallsGO.SetActive(_demoLimitsActive);
-                LogService.Instance.WriteToLog($"DemoWalls: {(_demoWallsGO.activeSelf ? "Enabled" : "Disabled")}");
-            }
-            if (_garage_Exterior_Demo_ColliderGO != null)
-            {
-                _garage_Exterior_Demo_ColliderGO.SetActive(_demoLimitsActive);
-                LogService.Instance.WriteToLog($"Garage_Exterior_Demo_Collider: {(_garage_Exterior_Demo_ColliderGO.activeSelf ? "Enabled" : "Disabled")}");
-            }
-            if (_garage_Exterior_Demo_Wall_Blocked_1GO != null)
-            {
-                _garage_Exterior_Demo_Wall_Blocked_1GO.SetActive(_demoLimitsActive);
-                LogService.Instance.WriteToLog($"Garage_Exterior_Demo_Wall_Blocked_1: {(_garage_Exterior_Demo_Wall_Blocked_1GO.activeSelf ? "Enabled" : "Disabled")}");
-            }
-            if (_demoVehiclesDetectorGO != null)
-            {
-                _demoVehiclesDetectorGO.SetActive(_demoLimitsActive);
-                LogService.Instance.WriteToLog($"DemoVehiclesDetector: {(_demoVehiclesDetectorGO.activeSelf ? "Enabled" : "Disabled")}");
-            }
-            LogService.Instance.WriteToLog($"Demo World Limits: {(_demoLimitsActive ? "Enabled" : "Disabled")}");
-            Singleton<UIManager>.Instance.ShowPopup($"Demo World Limits {(_demoLimitsActive ? "Enabled" : "Disabled")}", PopupType.Normal);
-        }
-
         public override void OnUpdate()
         {
 #if DEBUG
             if (Input.GetKeyDown(KeyCode.J))
             {
-                // This is a test key that should not be shipped with a release.
-                //RemoveDemoWalls();
-                //AdjustGameSpeed();
-                CheckIfInputIsFocused();
+                if (!CheckIfInputIsFocused())
+                {
+                    //var gameManager = GameManager.Instance;
+                    //if (gameManager == null)
+                    //    return;
+                    //var inputManager = gameManager.inputManager;
+                    //if (inputManager != null)
+                    //{
+                    //    // This is only enabled when the user is driving a car.
+                    //    // Might come in handy later.
+                    //    //LogService.Instance.WriteToLog($"IsCarEnabled: {inputManager.IsCarEnabled()}");
+                    //}
+                    // Get the GameObject being looked at.
+                    GameObject goInView = GameScript.Get().GetIOMouseOverGO();
+                    // Get the car being looked at.
+                    CarLoader carInView = GameScript.Get().GetIOMouseOverCarLoader2();
+                    // Get the part being looked at.
+                    CarPart carPart = GameScript.Get().GetIOMouseOverCarLoader();
+                    // If the user is looking at a car and a part, paint the car.
+                    // The game stores the last car looked at sometimes.
+                    // If the car is not null but the part is, the user isn't looking at a car.
+                    if (carInView != null && carPart != null)
+                    {
+                        //LogService.Instance.WriteToLog($"GameObject: {goInView.name}");
+                        //LogService.Instance.WriteToLog($"Car Loader: {carInView.name}");
+                        //LogService.Instance.WriteToLog($"Car Part: {carPart.name}");
+                    }
+                }
             }
 #endif
             if (_configFile == null) return;
 
-            if (Input.GetKeyDown(_configFile.AddMoney))
+            if (Input.GetKeyDown(_configFile.OpenCheatMenu))
             {
-                // Check if a window is open and show the user a message to close it first.
-                if (Singleton<WindowManager>.Instance?.activeWindows.count > 0)
+                var windowManager = WindowManager.Instance;
+                if (windowManager == null)
+                    return;
+
+                if (windowManager.activeWindows.count > 0)
                 {
-                    Singleton<UIManager>.Instance.ShowPopup($"Please close any open windows first.", PopupType.Normal);
+                    if (windowManager.IsWindowActive(WindowID.Shop))
+                    {
+                        var shopWindow = windowManager.GetWindowByID<ShopWindow25>(WindowID.Shop);
+                        if (shopWindow != null)
+                        {
+                            var partsPage = shopWindow.partsPage;
+                            if (partsPage != null && partsPage.ShopType == ShopType25.UsedParts)
+                            {
+                                if (!CheckIfInputIsFocused())
+                                {
+                                    DemoCheatMenu.ToggleCheatMenu(); 
+                                }
+                            }
+                        }
+                    }
+#if DEBUG
+                    else
+                    {
+                        var activeWindows = windowManager.activeWindows;
+                        LogService.Instance.WriteToLog($"Active Window: {activeWindows.head.Value}");
+                    }
+#endif
                 }
                 else
                 {
-                    // Get a reference to the Shared Game Data Manager.
-                    var sharedGameDataManager = SharedGameDataManager.Instance;
-#if DEBUG
-                    LogService.Instance.WriteToLog($"Original Money: {sharedGameDataManager?.money}");
-#endif
-                    // Adds the money amount in the config file to the player.
-                    sharedGameDataManager?.AddMoneyRpc(_configFile.MoneyAmount);
-#if DEBUG
-                    LogService.Instance.WriteToLog($"New Money: {sharedGameDataManager?.money}");
-                    //LogService.Instance.WriteToLog($"Inv Size Multi: {sharedGameDataManager.inventorySizeMultiplier}");
-                    //sharedGameDataManager.inventorySizeMultiplier = 5;
-                    //LogService.Instance.WriteToLog($"New Inv Size Multi: {sharedGameDataManager.inventorySizeMultiplier}");
-                    //LogService.Instance.WriteToLog($"Xp Multi: {sharedGameDataManager.xpMultiplier}");
-                    //sharedGameDataManager.xpMultiplier = 5;
-                    //LogService.Instance.WriteToLog($"New Xp Multi: {sharedGameDataManager.xpMultiplier}");
-#endif
+                    DemoCheatMenu.ToggleCheatMenu();
                 }
             }
 
-            if (Input.GetKeyDown(_configFile.RefreshUPM))
+            if (Input.GetKeyDown(_configFile.PaintCar) &&
+                _configFile.PaintCar != KeyCode.None)
             {
                 if (_currentScene.Equals("garage"))
                 {
-                    RefreshUPM();
+                    // Check that the user isn't typing in an InputField.
+                    if (!CheckIfInputIsFocused())
+                    {
+                        Helpers.CyclePaintColors();
+                    }
                 }
             }
 
-            if (Input.GetKeyDown(_configFile.ToggleUPM))
+            if (Input.GetKey(_configFile.RepairBody) &&
+                _configFile.PaintCar != KeyCode.None)
             {
                 if (_currentScene.Equals("garage"))
                 {
-                    ToggleUPM();
+                    // Check that the user isn't typing in an InputField.
+                    if (!CheckIfInputIsFocused())
+                    {
+                        Helpers.RepairCar();
+                    }
                 }
             }
 
-            if (Input.GetKeyDown(_configFile.ToggleDemoWorldLimits))
+            if (Input.GetKeyDown(KeyCode.Escape))
             {
-                if (_currentScene.Equals("garage"))
-                {
-                    ToggleDemoWorldLimits();
-                }
+                // This used to check if the menu was open.
+                // This now closes it not matter what,
+                // in case there was an issue with the variable.
+                DemoCheatMenu.ToggleCheatMenu(true);
             }
+        }
+
+        public override void OnGUI()
+        {
+            DemoCheatMenu.DrawCheatMenu();
         }
 
         /// <summary>
@@ -483,32 +366,31 @@ namespace DemoCheats
         /// <returns>(bool) True if the Search/Input Field is being used.</returns>
         private bool CheckIfInputIsFocused()
         {
-            try
+            var evt = EventSystem.current;
+            if (evt != null)
             {
-                var evt = EventSystem.current;
-                if (evt != null)
+                var activeGO = evt.currentSelectedGameObject;
+                if (activeGO != null)
                 {
-                    var activeGO = evt.currentSelectedGameObject;
-                    if (activeGO != null)
+                    // Check for legacy InputField
+                    if (activeGO.GetComponent<InputField>() != null)
                     {
-                        // Check for legacy InputField
                         if (activeGO.GetComponent<InputField>()?.isFocused == true)
-                            return true;
-
-                        // If TMP is used, it often exposes TMP_InputField type; do a safer type-name check
-                        var tmpComp = activeGO.GetComponent("TMP_InputField");
-                        if (tmpComp != null)
                         {
-                            // assume TMP input is focused when selected
                             return true;
                         }
                     }
+
+                    // If TMP is used, it often exposes TMP_InputField type; do a safer type-name check
+                    var tmpComp = activeGO.GetComponent("TMP_InputField");
+                    if (tmpComp != null)
+                    {
+                        // assume TMP input is focused when selected
+                        return true;
+                    }
                 }
             }
-            catch (Exception)
-            {
-                // Keep silent - on some builds some APIs might be unavailable; default to not focused.
-            }
+
             return false;
         }
     }
@@ -557,7 +439,7 @@ namespace DemoCheats
                 // In case logging initialization fails, keep using in-memory buffer.
                 _logFilePath = string.Empty;
 #if DEBUG
-                MelonLogger.Msg($"LogService.Initialize failed: {ex.Message}");
+                LogService.Instance.WriteToLog($"LogService.Initialize failed: {ex.Message}");
 #endif
             }
         }
@@ -595,7 +477,7 @@ namespace DemoCheats
                     else
                     {
                         // recreate file if missing
-                        File.WriteAllLines(_logFilePath, new[] { $"{BuildInfo.Name} - {BuildInfo.Version}", $"CMS 2026 Demo - {Il2Cpp.GameSettings.BuildVersion}", $"Log Created: {DateTime.Now:MM-dd-yyyy HH:mm:ss}" });
+                        File.WriteAllLines(_logFilePath, new[] { $"{BuildInfo.Name} - {BuildInfo.Version}", $"CMS 2026 Demo - {GameSettings.BuildVersion}", $"Log Created: {DateTime.Now:MM-dd-yyyy HH:mm:ss}" });
                         File.AppendAllLines(_logFilePath, _logs);
                         _logs.Clear();
                     }
