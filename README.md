@@ -1,10 +1,10 @@
-# DEMO CHEATS - 1.0.1
+# DEMO CHEATS - 1.0.2
 A collection of cheats for the Car Mechanic Simulator 2026 Demo.
 
 ## REQUIREMENTS
 * [MelonLoader 0.7.2](https://github.com/LavaGang/MelonLoader/releases/tag/v0.7.2)
 
-## UPDATE - 1.0.1
+## UPDATE - 1.0.2
 * Fixed a label on the menu that read "Used Car Market" instead of "Used Parts" Market
 
 ## FEATURES
