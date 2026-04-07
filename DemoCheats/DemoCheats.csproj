@@ -77,6 +77,10 @@
       <HintPath>D:\Steam\steamapps\common\Car Mechanic Simulator 2026 Demo\MelonLoader\net6\MelonLoader.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Unity.TextMeshPro, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>D:\Steam\steamapps\common\Car Mechanic Simulator 2026 Demo\MelonLoader\Il2CppAssemblies\Unity.TextMeshPro.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>D:\Steam\steamapps\common\Car Mechanic Simulator 2026 Demo\MelonLoader\Il2CppAssemblies\UnityEngine.dll</HintPath>

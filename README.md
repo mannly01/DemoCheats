@@ -1,15 +1,18 @@
-# DEMO CHEATS - 1.0.2
+# DEMO CHEATS - 1.1.0
 A collection of cheats for the Car Mechanic Simulator 2026 Demo.
 
 ## REQUIREMENTS
 * [MelonLoader 0.7.2](https://github.com/LavaGang/MelonLoader/releases/tag/v0.7.2)
 
-## UPDATE - 1.0.2
-* Fixed a label on the menu that read "Used Car Market" instead of "Used Parts" Market
+## UPDATE - 1.1.0
+* Added the ability to max out all skills available in the demo
+* Fixed Bug: The ESC key was causing multiple UI bugs, so it has been removed as an option
+* Fixed Bug: The cheat menu was able to be opened while viewing the computer
 
 ## FEATURES
 * Add a configured amount of money and XP to the player
 * Add skill points to the player
+* Max out the skills of the player
 * Toggle fast mounting of parts
 * Change the Game Speed, Player Walk Speed and Player Run Speed
 * Paint the car and wheels an approved factory color by looping through the available ones

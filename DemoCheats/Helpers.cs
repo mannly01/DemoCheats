@@ -2,6 +2,7 @@
 using Il2CppCMS.Core;
 using Il2CppCMS.Core.Car;
 using Il2CppCMS.Core.Car.Containers;
+using Il2CppCMS.DevTools;
 using Il2CppCMS.DevTools.QC;
 using Il2CppCMS.Player.Controller;
 using Il2CppCMS.Player.Skills;
@@ -158,6 +159,13 @@ namespace DemoCheats
             playerSkillSystem.AddPoints();
             LogService.Instance.WriteToLog($"Added 1 skill point");
             UIManager.Get().ShowPopup("Added 1 skill point.", PopupType.Normal);
+        }
+
+        public static void MaxSkills()
+        {
+            Singleton<TestScript>.Instance.UnlockAllSkills();
+            LogService.Instance.WriteToLog($"Maxed Player Skills");
+            UIManager.Get().ShowPopup("Maxed Player Skills.", PopupType.Normal);
         }
 
         /// <summary>

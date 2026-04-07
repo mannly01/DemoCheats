@@ -2,8 +2,11 @@
 using Il2CppCMS.Core;
 using Il2CppCMS.Core.Car;
 using Il2CppCMS.Core.Car.Containers;
+using Il2CppCMS.DevTools;
+using Il2CppCMS.DevTools.QC;
 using Il2CppCMS.UI;
 using Il2CppCMS.UI.Logic;
+using Il2CppCMS.UI.Logic.Skills.Controls;
 using Il2CppCMS.UI.Windows;
 using MelonLoader;
 using System;
@@ -23,7 +26,7 @@ namespace DemoCheats
         public const string Description = "A collection of cheats for the Car Mechanic Simulator 2026 Demo.";
         public const string Author = "mannly82";
         public const string Company = "The Mann Design";
-        public const string Version = "1.0.1";
+        public const string Version = "1.1.0";
         public const string DownloadLink = "https://www.nexusmods.com/carmechanicsimulator2026/mods/6";
         public const string MelonGameCompany = "Red Dot Games";
         public const string MelonGameName = "Car Mechanic Simulator 2026 Demo";
@@ -244,8 +247,10 @@ namespace DemoCheats
                     //{
                     //    // This is only enabled when the user is driving a car.
                     //    // Might come in handy later.
+                    //    // GameMode.Get().currentMode == gameMode.CarDrive is another way to tell.
                     //    //LogService.Instance.WriteToLog($"IsCarEnabled: {inputManager.IsCarEnabled()}");
                     //}
+                    LogService.Instance.WriteToLog($"Game Mode: {GameMode.Get().currentMode}");
                     // Get the GameObject being looked at.
                     GameObject goInView = GameScript.Get().GetIOMouseOverGO();
                     // Get the car being looked at.
@@ -257,10 +262,57 @@ namespace DemoCheats
                     // If the car is not null but the part is, the user isn't looking at a car.
                     if (carInView != null && carPart != null)
                     {
-                        //LogService.Instance.WriteToLog($"GameObject: {goInView.name}");
-                        //LogService.Instance.WriteToLog($"Car Loader: {carInView.name}");
-                        //LogService.Instance.WriteToLog($"Car Part: {carPart.name}");
+                        LogService.Instance.WriteToLog($"GameObject: {goInView.name}");
+                        LogService.Instance.WriteToLog($"Car Loader: {carInView.name}");
+                        LogService.Instance.WriteToLog($"Car Part: {carPart.name}");
                     }
+                    LogService.Instance.WriteToLog($"Active Windows: {WindowManager.Instance.activeWindows.count}");
+
+                    var skillUpgrades = Resources.FindObjectsOfTypeAll<SkillUpgradeItem>();
+                    LogService.Instance.WriteToLog($"Skill Count: {skillUpgrades.Count}");
+                    AdditionalRequirement additionalRequirement;
+                    foreach (var skillUpgrade in skillUpgrades)
+                    {
+                        switch (skillUpgrade.AssignedSkillID)
+                        {
+                            case "fast_mount":
+                                LogService.Instance.WriteToLog("-- Fast Mount --");
+                                LogService.Instance.WriteToLog($"Fast Mount can unlock: {skillUpgrade.canUnlock}");
+                                additionalRequirement = skillUpgrade.additionalRequirement;
+                                LogService.Instance.WriteToLog($"Additional Requirement: {additionalRequirement.requirementText.text}");
+                                LogService.Instance.WriteToLog($"Requirement Fullfilled: {additionalRequirement.isFulfilled}");
+                                LogService.Instance.WriteToLog($"Current Value: {additionalRequirement.currentValue}");
+                                LogService.Instance.WriteToLog($"Required Value: {additionalRequirement.requiredValue}");
+                                LogService.Instance.WriteToLog("-- Fast Mount --");
+                                break;
+                            case "fast_partremove":
+                                LogService.Instance.WriteToLog("-- Fast Part Remove --");
+                                LogService.Instance.WriteToLog($"Fast Part Remove can unlock: {skillUpgrade.canUnlock}");
+                                additionalRequirement = skillUpgrade.additionalRequirement;
+                                LogService.Instance.WriteToLog($"Additional Requirement: {additionalRequirement.requirementText.text}");
+                                LogService.Instance.WriteToLog($"Requirement Fullfilled: {additionalRequirement.isFulfilled}");
+                                LogService.Instance.WriteToLog($"Current Value: {additionalRequirement.currentValue}");
+                                LogService.Instance.WriteToLog($"Required Value: {additionalRequirement.requiredValue}");
+                                LogService.Instance.WriteToLog("-- Fast Part Remove --");
+                                break;
+                            case "inventory_capacity":
+                                LogService.Instance.WriteToLog("-- Inventory Capacity --");
+                                LogService.Instance.WriteToLog($"Inventory Capacity can unlock: {skillUpgrade.canUnlock}");
+                                additionalRequirement = skillUpgrade.additionalRequirement;
+                                LogService.Instance.WriteToLog($"Additional Requirement: {additionalRequirement.requirementText.text}");
+                                LogService.Instance.WriteToLog($"Requirement Fullfilled: {additionalRequirement.isFulfilled}");
+                                LogService.Instance.WriteToLog($"Current Value: {additionalRequirement.currentValue}");
+                                LogService.Instance.WriteToLog($"Required Value: {additionalRequirement.requiredValue}");
+                                LogService.Instance.WriteToLog("-- Inventory Capacity --");
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+
+                    // This adds coffee to the player.
+                    // They can buy the coffee machine to do this too.
+                    //PlayerCommands.ActivatePowerUp();
                 }
             }
 #endif
@@ -268,6 +320,12 @@ namespace DemoCheats
 
             if (Input.GetKeyDown(_configFile.OpenCheatMenu))
             {
+                if (GameMode.Get().currentMode == gameMode.CarDrive)
+                {
+                    UIManager.Get().ShowPopup("Please exit the vehicle first.", PopupType.Normal);
+                    LogService.Instance.WriteToLog("Player is inside a vehicle.");
+                    return;
+                }
                 var windowManager = WindowManager.Instance;
                 if (windowManager == null)
                     return;
@@ -327,14 +385,6 @@ namespace DemoCheats
                         Helpers.RepairCar();
                     }
                 }
-            }
-
-            if (Input.GetKeyDown(KeyCode.Escape))
-            {
-                // This used to check if the menu was open.
-                // This now closes it not matter what,
-                // in case there was an issue with the variable.
-                DemoCheatMenu.ToggleCheatMenu(true);
             }
         }
 
@@ -438,9 +488,7 @@ namespace DemoCheats
             {
                 // In case logging initialization fails, keep using in-memory buffer.
                 _logFilePath = string.Empty;
-#if DEBUG
                 LogService.Instance.WriteToLog($"LogService.Initialize failed: {ex.Message}");
-#endif
             }
         }
 

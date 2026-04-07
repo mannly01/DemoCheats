@@ -15,7 +15,6 @@ namespace DemoCheats
         private static bool isInitialized = false;
 
         private static string nl = System.Environment.NewLine;
-        private static bool buttonClosePressed = false;
         private static int drawDoubleSizeFor4K = 1; // for 4K display, this is 2
 
         public static System.Collections.IEnumerator ToggleConsoleFirstTimeDisplay()
@@ -25,14 +24,8 @@ namespace DemoCheats
             yield break;
         }
 
-        public static void ToggleCheatMenu(bool off = false)
+        public static void ToggleCheatMenu()
         {
-            if (off)
-            {
-                cheatMenuShown = false;
-                buttonClosePressed = true;
-                return;
-            }
             if (!cheatMenuShown)
             {
                 cheatMenuShown = true;
@@ -57,11 +50,9 @@ namespace DemoCheats
                 }
                 else
                 {
-
                     GameMode.Get().SetCurrentMode(gameMode.Garage);
                 }
             }
-            buttonClosePressed = false;
         }
 
         public static void ShowCheatMenu()
@@ -90,9 +81,13 @@ namespace DemoCheats
             {
                 Helpers.AdjustGameSpeedUp(true);
             }, new DebugCommandAdditionalData { doNotCloseMenu = true }));
-            commandList.Add(new DebugCommand("addskillpoint", "Add a Skill Point to the Player.", "Skill Point+", () =>
+            commandList.Add(new DebugCommand("addskillpoint", "Add a Skill Point to the Player.", "Skill Pt+", () =>
             {
                 Helpers.AddSkillPoints();
+            }, new DebugCommandAdditionalData { doNotCloseMenu = true }));
+            commandList.Add(new DebugCommand("maxskills", "Max out the Player skills.", "Max Skills", () =>
+            {
+                Helpers.MaxSkills();
             }, new DebugCommandAdditionalData { doNotCloseMenu = true }));
             commandList.Add(new DebugCommand("walkspeeddown", "Turn down the Walk Speed", "Walk-", () =>
             {
@@ -195,7 +190,7 @@ namespace DemoCheats
 
             buttoniStyle = new GUIStyle(GUI.skin.button)
             {
-                fontSize = 14 * drawDoubleSizeFor4K,
+                fontSize = 13 * drawDoubleSizeFor4K,
                 fontStyle = FontStyle.Bold
             };
             int buttonWidth = 160 * drawDoubleSizeFor4K;
@@ -292,7 +287,7 @@ namespace DemoCheats
             rowY = rowY + (int)(buttonHeight * 1.5f);
 
             // Second Row of Buttons.
-            for (int i = 5; i < 8; i++)
+            for (int i = 5; i < 9; i++)
             {
                 DebugCommandBase command = commandList[i] as DebugCommandBase;
                 if (command != null)
@@ -304,12 +299,14 @@ namespace DemoCheats
                     {
                         case 5: // Blank for now
                             buttonX = menuX + column1;
-                            buttonWidth = 160 * drawDoubleSizeFor4K;
                             break;
                         case 6:
-                            buttonX = menuX + column3;
+                            buttonX = menuX + column2;
                             break;
                         case 7:
+                            buttonX = menuX + column3;
+                            break;
+                        case 8:
                             buttonX = menuX + column4;
                             break;
                         default:
@@ -333,7 +330,7 @@ namespace DemoCheats
             rowY = rowY + (int)(buttonHeight * 1.5f);
 
             // Third Row of Buttons
-            for (int i = 8; i < 11; i++)
+            for (int i = 9; i < 12; i++)
             {
                 DebugCommandBase command = commandList[i] as DebugCommandBase;
                 if (command != null)
@@ -343,14 +340,14 @@ namespace DemoCheats
                     buttonWidth = 75 * drawDoubleSizeFor4K;
                     switch (i)
                     {
-                        case 8: // Blank for now
+                        case 9: // Blank for now
                             buttonX = menuX + column1;
                             buttonWidth = 160 * drawDoubleSizeFor4K;
                             break;
-                        case 9:
+                        case 10:
                             buttonX = menuX + column3;
                             break;
-                        case 10:
+                        case 11:
                             buttonX = menuX + column4;
                             break;
                         default:
@@ -378,7 +375,7 @@ namespace DemoCheats
             rowY = rowY + buttonHeight;
 
             // Fourth Row of buttons
-            for (int i = 11; i < 13; i++)
+            for (int i = 12; i < 14; i++)
             {
                 DebugCommandBase command = commandList[i] as DebugCommandBase;
                 if (command != null)
@@ -409,7 +406,7 @@ namespace DemoCheats
             rowY = rowY + buttonHeight;
 
             // Fifth Row of buttons
-            for (int i = 13; i < 15; i++)
+            for (int i = 14; i < 16; i++)
             {
                 DebugCommandBase command = commandList[i] as DebugCommandBase;
                 if (command != null)
@@ -440,7 +437,7 @@ namespace DemoCheats
             rowY = rowY + buttonHeight;
 
             // Sixth Row of buttons
-            for (int i = 15; i < 17; i++)
+            for (int i = 16; i < 18; i++)
             {
                 DebugCommandBase command = commandList[i] as DebugCommandBase;
                 if (command != null)
@@ -471,7 +468,7 @@ namespace DemoCheats
             rowY = rowY + buttonHeight;
 
             // Seventh Row of buttons
-            for (int i = 17; i < 19; i++)
+            for (int i = 18; i < 20; i++)
             {
                 DebugCommandBase command = commandList[i] as DebugCommandBase;
                 if (command != null)
@@ -497,10 +494,6 @@ namespace DemoCheats
             }
 
             Event eventti = Event.current;
-            if (eventti.keyCode == KeyCode.Escape && buttonClosePressed == false)
-            {
-                buttonClosePressed = true;
-            }
         }
     }
 
