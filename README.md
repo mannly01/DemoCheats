@@ -12,7 +12,7 @@ A collection of cheats for the Car Mechanic Simulator 2026 Demo.
 ## FEATURES
 * Add a configured amount of money and XP to the player
 * Add skill points to the player
-* Max out the skills of the player
+* Max out the skills of the player (this is permanent without saving)
 * Toggle fast mounting of parts
 * Change the Game Speed, Player Walk Speed and Player Run Speed
 * Paint the car and wheels an approved factory color by looping through the available ones
