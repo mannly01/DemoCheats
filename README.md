@@ -1,11 +1,12 @@
-# DEMO CHEATS - 1.1.0
+# DEMO CHEATS - 1.1.1
 A collection of cheats for the Car Mechanic Simulator 2026 Demo.
 
 ## REQUIREMENTS
 * [MelonLoader 0.7.2](https://github.com/LavaGang/MelonLoader/releases/tag/v0.7.2)
 
-## UPDATE - 1.1.0
+## UPDATE - 1.1.1
 * Added the ability to max out all skills available in the demo
+* Fixed Bug: The bottom four rows of buttons were reversed left/right
 * Fixed Bug: The ESC key was causing multiple UI bugs, so it has been removed as an option
 * Fixed Bug: The cheat menu was able to be opened while viewing the computer
 

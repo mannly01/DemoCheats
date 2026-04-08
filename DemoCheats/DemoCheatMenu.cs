@@ -383,7 +383,7 @@ namespace DemoCheats
                     string description = command.CommandDescription;
                     int buttonX = 0;
                     buttonWidth = 160 * drawDoubleSizeFor4K;
-                    buttonX = menuX + (i %2 == 0 ? column3 : column1);
+                    buttonX = menuX + (i % 2 == 0 ? column1 : column3);
                     if (GUI.Button(new Rect(buttonX, rowY, buttonWidth, buttonHeight),
                                    new GUIContent(command.CommandFormat, description), buttoniStyle))
                     {
@@ -414,7 +414,7 @@ namespace DemoCheats
                     string description = command.CommandDescription;
                     int buttonX = 0;
                     buttonWidth = 160 * drawDoubleSizeFor4K;
-                    buttonX = menuX + (i % 2 == 0 ? column3 : column1);
+                    buttonX = menuX + (i % 2 == 0 ? column1 : column3);
                     if (GUI.Button(new Rect(buttonX, rowY, buttonWidth, buttonHeight),
                                    new GUIContent(command.CommandFormat, description), buttoniStyle))
                     {
@@ -445,7 +445,7 @@ namespace DemoCheats
                     string description = command.CommandDescription;
                     int buttonX = 0;
                     buttonWidth = 160 * drawDoubleSizeFor4K;
-                    buttonX = menuX + (i % 2 == 0 ? column3 : column1);
+                    buttonX = menuX + (i % 2 == 0 ? column1 : column3);
                     if (GUI.Button(new Rect(buttonX, rowY, buttonWidth, buttonHeight),
                                    new GUIContent(command.CommandFormat, description), buttoniStyle))
                     {
@@ -476,7 +476,7 @@ namespace DemoCheats
                     string description = command.CommandDescription;
                     int buttonX = 0;
                     buttonWidth = 160 * drawDoubleSizeFor4K;
-                    buttonX = menuX + (i % 2 == 0 ? column3 : column1);
+                    buttonX = menuX + (i % 2 == 0 ? column1 : column3);
                     if (GUI.Button(new Rect(buttonX, rowY, buttonWidth, buttonHeight),
                                    new GUIContent(command.CommandFormat, description), buttoniStyle))
                     {

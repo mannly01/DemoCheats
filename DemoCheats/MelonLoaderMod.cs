@@ -26,7 +26,7 @@ namespace DemoCheats
         public const string Description = "A collection of cheats for the Car Mechanic Simulator 2026 Demo.";
         public const string Author = "mannly82";
         public const string Company = "The Mann Design";
-        public const string Version = "1.1.0";
+        public const string Version = "1.1.1";
         public const string DownloadLink = "https://www.nexusmods.com/carmechanicsimulator2026/mods/6";
         public const string MelonGameCompany = "Red Dot Games";
         public const string MelonGameName = "Car Mechanic Simulator 2026 Demo";
