@@ -1,12 +1,12 @@
 ﻿using Il2Cpp;
 using Il2CppCMS.Core;
-using Il2CppCMS.Core.Car;
-using Il2CppCMS.Core.Car.Containers;
 using Il2CppCMS.DevTools;
-using Il2CppCMS.DevTools.QC;
 using Il2CppCMS.UI;
+using Il2CppCMS.UI.Description;
+using Il2CppCMS.UI.Helpers;
 using Il2CppCMS.UI.Logic;
-using Il2CppCMS.UI.Logic.Skills.Controls;
+using Il2CppCMS.UI.Logic.Shop.Cart.Containers;
+using Il2CppCMS.UI.Logic.Shop.List_.Containers;
 using Il2CppCMS.UI.Windows;
 using MelonLoader;
 using System;
@@ -16,6 +16,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 namespace DemoCheats
@@ -26,7 +27,7 @@ namespace DemoCheats
         public const string Description = "A collection of cheats for the Car Mechanic Simulator 2026 Demo.";
         public const string Author = "mannly82";
         public const string Company = "The Mann Design";
-        public const string Version = "1.1.1";
+        public const string Version = "1.3.0";
         public const string DownloadLink = "https://www.nexusmods.com/carmechanicsimulator2026/mods/6";
         public const string MelonGameCompany = "Red Dot Games";
         public const string MelonGameName = "Car Mechanic Simulator 2026 Demo";
@@ -162,6 +163,12 @@ namespace DemoCheats
         private static string _currentScene = string.Empty;
         public static string GetCurrentScene() { return _currentScene; }
 
+        private InputAction _enterAction;
+        private InputAction _enterHoldAction;
+        private InputAction _exitAction;
+
+        private Dictionary<string, string> _partPrices = new Dictionary<string, string>();
+
         public override void OnInitializeMelon()
         {
             // Tell the user a log file was created.
@@ -172,6 +179,18 @@ namespace DemoCheats
             _configFile = new DemoCheatsConfigFile();
         }
 
+        private void GetBoundKeys()
+        {
+            var asset = Resources.FindObjectsOfTypeAll<InputActionAsset>()[0];
+            _enterAction = asset.FindAction("UI Common/Accept", false);
+            _enterHoldAction = asset.FindAction("UI Common/Accept Hold", false);
+            _exitAction = asset.FindAction("UI Common/Cancel", false);
+#if DEBUG
+            LogService.Instance.WriteToLog($"Enter Action: {_enterAction.GetBindingDisplayString()}");
+            LogService.Instance.WriteToLog($"Enter Hold Action: {_enterHoldAction.GetBindingDisplayString()}");
+            LogService.Instance.WriteToLog($"Exit Action: {_exitAction.GetBindingDisplayString()}");
+#endif
+        }
         public override void OnSceneWasInitialized(int buildIndex, string sceneName)
         {
             if (buildIndex == -1)
@@ -229,12 +248,153 @@ namespace DemoCheats
                     }
 #endif
                 }
+                GetBoundKeys();
             }
         }
 
+        private System.Collections.IEnumerator MoveShoppingListToCart()
+        {
+            var windowManager = WindowManager.Instance;
+            if (windowManager == null)
+                yield return null;
+
+            if (windowManager.activeWindows.count > 0)
+            {
+                if (windowManager.IsWindowActive(WindowID.Shop))
+                {
+                    var shopWindow = windowManager.GetWindowByID<ShopWindow25>(WindowID.Shop);
+                    if (shopWindow != null)
+                    {
+                        var partsPage = shopWindow.partsPage;
+                        if (partsPage != null)
+                        {
+                            var shopListManager = Singleton<GameManager>.Instance.shopListManager;
+                            var slItems = shopListManager.listItems;
+                            var shopCartManager = Singleton<GameManager>.Instance.ShopCartManager;
+                            var scItems = shopCartManager.cartItems;
+
+                            if (partsPage.isActiveAndEnabled)
+                            {
+                                if (slItems?.Count > 0)
+                                {
+                                    Il2CppSystem.Collections.Generic.List<IShopListItem> tempList = new Il2CppSystem.Collections.Generic.List<IShopListItem>();
+                                    foreach (var slItem in slItems)
+                                    {
+                                        if (slItem.ShopType == partsPage.ShopType)
+                                        {
+                                            //LogService.Instance.WriteToLog($"Part ID: {slItem.ItemID}");
+                                            //LogService.Instance.WriteToLog($"Part Name: {GameInventory.Instance.GetLocalizedName(slItem.ItemID)}");
+                                            var gameItem = GameInventory.Instance.GetItemProperty(slItem.ItemID);
+                                            if (partsPage.ShopType == ShopType25.LicensePlates)
+                                            {
+                                                ShopListLicensePlate slLP = slItem.TryCast<ShopListLicensePlate>();
+                                                if (slLP != null)
+                                                {
+                                                    var licenseName = ItemHelper.ParseLicensePlateName(slLP.Name);
+                                                    int price = Helper.GetPrice(TestScript.Method_Internal_Static_IBaseItem_LicensePlate_0(
+                                                    Singleton<GameInventory>.Instance.LicensePlatesProvider.GetRandomLicensePlate()));
+#if DEBUG
+                                                    LogService.Instance.WriteToLog($"Parsed Part Name: {licenseName}");
+                                                    LogService.Instance.WriteToLog($"License Plate Price: ${price}");
+#endif
+                                                    ShopCartLicensePlate scLP = new ShopCartLicensePlate()
+                                                    {
+                                                        Amount = slLP.Amount,
+                                                        ItemID = licenseName,
+                                                        Price = (uint)price,
+                                                        ShopType = slLP.ShopType
+                                                    };
+                                                    shopCartManager.AddToCart(new IShopCartItem(scLP.Pointer));
+                                                }
+                                            }
+                                            else if (partsPage.ShopType == ShopType25.Wheels)
+                                            {
+                                                ShopListRim slR = slItem.TryCast<ShopListRim>();
+                                                if (slR != null)
+                                                {
+                                                    ShopCartRim scR = new ShopCartRim()
+                                                    {
+                                                        Amount = slR.Amount,
+                                                        ET = slR.ET,
+                                                        ItemID = slR.ItemID,
+                                                        Price = gameItem.Price,
+                                                        Size = slR.Size,
+                                                        ShopType = slR.ShopType
+                                                    };
+                                                    shopCartManager.AddToCart(new IShopCartItem(scR.Pointer));
+                                                }
+                                                else
+                                                {
+                                                    ShopListTire slT = slItem.TryCast<ShopListTire>();
+                                                    if (slT != null)
+                                                    {
+                                                        ShopCartTire scT = new ShopCartTire()
+                                                        {
+                                                            Amount = slT.Amount,
+                                                            ItemID = slT.ItemID,
+                                                            Price = gameItem.Price,
+                                                            Profile = slT.Profile,
+                                                            Size = slT.Size,
+                                                            ShopType = slT.ShopType,
+                                                            Width = slT.Width
+                                                        };
+                                                        shopCartManager.AddToCart(new IShopCartItem(scT.Pointer));
+                                                    }
+                                                }
+                                            }
+                                            else
+                                            {
+                                                ShopCartItem scItem = new ShopCartItem()
+                                                {
+                                                    Amount = slItem.Amount,
+                                                    ItemID = slItem.ItemID,
+                                                    Price = gameItem.Price,
+                                                    ShopType = slItem.ShopType
+                                                };
+                                                shopCartManager.AddToCart(new IShopCartItem(scItem.Pointer));
+                                            }
+
+                                            tempList.Add(slItem);
+                                        }
+                                    }
+                                    foreach (var tempItem in tempList)
+                                    {
+                                        partsPage.shopList.RemoveListItem(tempItem);
+                                    }
+                                    partsPage.UpdateItems();
+                                    partsPage.ShopCart.UpdateItems(partsPage.ShopType);
+                                }
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    var activeWindows = windowManager.activeWindows;
+#if DEBUG
+                    LogService.Instance.WriteToLog($"Active Window: {activeWindows.head.Value}");
+#endif
+                }
+            }
+        }
         public override void OnUpdate()
         {
 #if DEBUG
+            if (_enterAction != null)
+            {
+                if (_enterAction.WasReleasedThisFrame())
+                {
+                    LogService.Instance.WriteToLog($"{_enterAction.GetBindingDisplayString().Split('|')[0].Trim()} was released");
+                }
+            }
+            if (_exitAction != null)
+            {
+                if (_exitAction.WasReleasedThisFrame())
+                {
+                    LogService.Instance.WriteToLog($"{_exitAction.GetBindingDisplayString().Split('|')[0].Trim()} was released");
+                } 
+            }
+
             if (Input.GetKeyDown(KeyCode.J))
             {
                 if (!CheckIfInputIsFocused())
@@ -250,69 +410,101 @@ namespace DemoCheats
                     //    // GameMode.Get().currentMode == gameMode.CarDrive is another way to tell.
                     //    //LogService.Instance.WriteToLog($"IsCarEnabled: {inputManager.IsCarEnabled()}");
                     //}
-                    LogService.Instance.WriteToLog($"Game Mode: {GameMode.Get().currentMode}");
-                    // Get the GameObject being looked at.
-                    GameObject goInView = GameScript.Get().GetIOMouseOverGO();
-                    // Get the car being looked at.
-                    CarLoader carInView = GameScript.Get().GetIOMouseOverCarLoader2();
-                    // Get the part being looked at.
-                    CarPart carPart = GameScript.Get().GetIOMouseOverCarLoader();
-                    // If the user is looking at a car and a part, paint the car.
-                    // The game stores the last car looked at sometimes.
-                    // If the car is not null but the part is, the user isn't looking at a car.
-                    if (carInView != null && carPart != null)
-                    {
-                        LogService.Instance.WriteToLog($"GameObject: {goInView.name}");
-                        LogService.Instance.WriteToLog($"Car Loader: {carInView.name}");
-                        LogService.Instance.WriteToLog($"Car Part: {carPart.name}");
-                    }
-                    LogService.Instance.WriteToLog($"Active Windows: {WindowManager.Instance.activeWindows.count}");
+                    //LogService.Instance.WriteToLog($"Game Mode: {GameMode.Get().currentMode}");
+                    //// Get the GameObject being looked at.
+                    //GameObject goInView = GameScript.Get().GetIOMouseOverGO();
+                    //// Get the car being looked at.
+                    //CarLoader carInView = GameScript.Get().GetIOMouseOverCarLoader2();
+                    //// Get the part being looked at.
+                    //CarPart carPart = GameScript.Get().GetIOMouseOverCarLoader();
+                    //// If the user is looking at a car and a part, paint the car.
+                    //// The game stores the last car looked at sometimes.
+                    //// If the car is not null but the part is, the user isn't looking at a car.
+                    //if (carInView != null && carPart != null)
+                    //{
+                    //    LogService.Instance.WriteToLog($"GameObject: {goInView.name}");
+                    //    LogService.Instance.WriteToLog($"Car Loader: {carInView.name}");
+                    //    LogService.Instance.WriteToLog($"Car Part: {carPart.name}");
+                    //}
+                    //LogService.Instance.WriteToLog($"Active Windows: {WindowManager.Instance.activeWindows.count}");
 
-                    var skillUpgrades = Resources.FindObjectsOfTypeAll<SkillUpgradeItem>();
-                    LogService.Instance.WriteToLog($"Skill Count: {skillUpgrades.Count}");
-                    AdditionalRequirement additionalRequirement;
-                    foreach (var skillUpgrade in skillUpgrades)
-                    {
-                        switch (skillUpgrade.AssignedSkillID)
-                        {
-                            case "fast_mount":
-                                LogService.Instance.WriteToLog("-- Fast Mount --");
-                                LogService.Instance.WriteToLog($"Fast Mount can unlock: {skillUpgrade.canUnlock}");
-                                additionalRequirement = skillUpgrade.additionalRequirement;
-                                LogService.Instance.WriteToLog($"Additional Requirement: {additionalRequirement.requirementText.text}");
-                                LogService.Instance.WriteToLog($"Requirement Fullfilled: {additionalRequirement.isFulfilled}");
-                                LogService.Instance.WriteToLog($"Current Value: {additionalRequirement.currentValue}");
-                                LogService.Instance.WriteToLog($"Required Value: {additionalRequirement.requiredValue}");
-                                LogService.Instance.WriteToLog("-- Fast Mount --");
-                                break;
-                            case "fast_partremove":
-                                LogService.Instance.WriteToLog("-- Fast Part Remove --");
-                                LogService.Instance.WriteToLog($"Fast Part Remove can unlock: {skillUpgrade.canUnlock}");
-                                additionalRequirement = skillUpgrade.additionalRequirement;
-                                LogService.Instance.WriteToLog($"Additional Requirement: {additionalRequirement.requirementText.text}");
-                                LogService.Instance.WriteToLog($"Requirement Fullfilled: {additionalRequirement.isFulfilled}");
-                                LogService.Instance.WriteToLog($"Current Value: {additionalRequirement.currentValue}");
-                                LogService.Instance.WriteToLog($"Required Value: {additionalRequirement.requiredValue}");
-                                LogService.Instance.WriteToLog("-- Fast Part Remove --");
-                                break;
-                            case "inventory_capacity":
-                                LogService.Instance.WriteToLog("-- Inventory Capacity --");
-                                LogService.Instance.WriteToLog($"Inventory Capacity can unlock: {skillUpgrade.canUnlock}");
-                                additionalRequirement = skillUpgrade.additionalRequirement;
-                                LogService.Instance.WriteToLog($"Additional Requirement: {additionalRequirement.requirementText.text}");
-                                LogService.Instance.WriteToLog($"Requirement Fullfilled: {additionalRequirement.isFulfilled}");
-                                LogService.Instance.WriteToLog($"Current Value: {additionalRequirement.currentValue}");
-                                LogService.Instance.WriteToLog($"Required Value: {additionalRequirement.requiredValue}");
-                                LogService.Instance.WriteToLog("-- Inventory Capacity --");
-                                break;
-                            default:
-                                break;
-                        }
-                    }
+                    // If the user upgrades a skill, the UnlockAllSkills() cheat doesn't work.
+                    //var skillUpgrades = Resources.FindObjectsOfTypeAll<SkillUpgradeItem>();
+                    //LogService.Instance.WriteToLog($"Skill Count: {skillUpgrades.Count}");
+                    //AdditionalRequirement additionalRequirement;
+                    //foreach (var skillUpgrade in skillUpgrades)
+                    //{
+                    //    switch (skillUpgrade.AssignedSkillID)
+                    //    {
+                    //        case "fast_mount":
+                    //            LogService.Instance.WriteToLog("-- Fast Mount --");
+                    //            LogService.Instance.WriteToLog($"Fast Mount can unlock: {skillUpgrade.canUnlock}");
+                    //            additionalRequirement = skillUpgrade.additionalRequirement;
+                    //            LogService.Instance.WriteToLog($"Additional Requirement: {additionalRequirement.requirementText.text}");
+                    //            LogService.Instance.WriteToLog($"Requirement Fullfilled: {additionalRequirement.isFulfilled}");
+                    //            LogService.Instance.WriteToLog($"Current Value: {additionalRequirement.currentValue}");
+                    //            LogService.Instance.WriteToLog($"Required Value: {additionalRequirement.requiredValue}");
+                    //            LogService.Instance.WriteToLog("-- Fast Mount --");
+                    //            break;
+                    //        case "fast_partremove":
+                    //            LogService.Instance.WriteToLog("-- Fast Part Remove --");
+                    //            LogService.Instance.WriteToLog($"Fast Part Remove can unlock: {skillUpgrade.canUnlock}");
+                    //            additionalRequirement = skillUpgrade.additionalRequirement;
+                    //            LogService.Instance.WriteToLog($"Additional Requirement: {additionalRequirement.requirementText.text}");
+                    //            LogService.Instance.WriteToLog($"Requirement Fullfilled: {additionalRequirement.isFulfilled}");
+                    //            LogService.Instance.WriteToLog($"Current Value: {additionalRequirement.currentValue}");
+                    //            LogService.Instance.WriteToLog($"Required Value: {additionalRequirement.requiredValue}");
+                    //            LogService.Instance.WriteToLog("-- Fast Part Remove --");
+                    //            break;
+                    //        case "inventory_capacity":
+                    //            LogService.Instance.WriteToLog("-- Inventory Capacity --");
+                    //            LogService.Instance.WriteToLog($"Inventory Capacity can unlock: {skillUpgrade.canUnlock}");
+                    //            additionalRequirement = skillUpgrade.additionalRequirement;
+                    //            LogService.Instance.WriteToLog($"Additional Requirement: {additionalRequirement.requirementText.text}");
+                    //            LogService.Instance.WriteToLog($"Requirement Fullfilled: {additionalRequirement.isFulfilled}");
+                    //            LogService.Instance.WriteToLog($"Current Value: {additionalRequirement.currentValue}");
+                    //            LogService.Instance.WriteToLog($"Required Value: {additionalRequirement.requiredValue}");
+                    //            LogService.Instance.WriteToLog("-- Inventory Capacity --");
+                    //            break;
+                    //        default:
+                    //            break;
+                    //    }
+                    //}
 
                     // This adds coffee to the player.
                     // They can buy the coffee machine to do this too.
                     //PlayerCommands.ActivatePowerUp();
+
+                    // This prints the active controls being shown at the bottom of the Shop window.
+                    //var windowManager = WindowManager.Instance;
+                    //if (windowManager == null)
+                    //    return;
+
+                    //if (windowManager.activeWindows.count > 0)
+                    //{
+                    //    if (windowManager.IsWindowActive(WindowID.Shop))
+                    //    {
+                    //        var shopWindow = windowManager.GetWindowByID<ShopWindow25>(WindowID.Shop);
+                    //        if (shopWindow != null)
+                    //        {
+                    //            var descriptionManager = GameObject.FindFirstObjectByType<UIDescriptionManager>();
+                    //            if (descriptionManager != null)
+                    //            {
+                    //                var shop = descriptionManager.GetComponentInChildren<UIDescription>();
+                    //                if (shop != null)
+                    //                {
+                    //                    foreach (var description in shop.descriptions)
+                    //                    {
+                    //                        if (description.isActive)
+                    //                        {
+                    //                            LogService.Instance.WriteToLog($"Action: {description.ActionName}: {description.InputAction.GetBindingDisplayString()}");
+                    //                        }
+                    //                    }
+                    //                }
+                    //            }
+                    //        }
+                    //    }
+                    //}
                 }
             }
 #endif
@@ -342,7 +534,7 @@ namespace DemoCheats
                             {
                                 if (!CheckIfInputIsFocused())
                                 {
-                                    DemoCheatMenu.ToggleCheatMenu(); 
+                                    DemoCheatMenu.ToggleCheatMenu();
                                 }
                             }
                         }
@@ -375,7 +567,7 @@ namespace DemoCheats
             }
 
             if (Input.GetKey(_configFile.RepairBody) &&
-                _configFile.PaintCar != KeyCode.None)
+                _configFile.RepairBody != KeyCode.None)
             {
                 if (_currentScene.Equals("garage"))
                 {
@@ -384,6 +576,20 @@ namespace DemoCheats
                     {
                         Helpers.RepairCar();
                     }
+                }
+            }
+
+            // https://docs.unity3d.com/Packages/com.unity.inputsystem@1.19/manual/ActionBindings.html#working-with-bindings
+            if (_enterHoldAction != null)
+            {
+                if (_enterHoldAction.WasPerformedThisFrame())
+                {
+#if DEBUG
+                    LogService.Instance.WriteToLog($"{_enterHoldAction.GetBindingDisplayString().Split('|')[0].Trim()} was performed");
+#endif
+
+                    // Move all items in the Shopping List to the Cart.
+                    MelonCoroutines.Start(MoveShoppingListToCart());
                 }
             }
         }

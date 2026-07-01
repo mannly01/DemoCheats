@@ -10,6 +10,7 @@ using Il2CppCMS.Shared;
 using Il2CppCMS.UI;
 using Il2CppCMS.UI.Logic;
 using Il2CppCMS.UI.Windows;
+using Il2CppInterop.Runtime.Runtime;
 using Il2CppSystem.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -428,6 +429,7 @@ namespace DemoCheats
         {
             if (_configFile == null)
                 yield return null;
+
             var carLoadersGO = Resources.FindObjectsOfTypeAll<GameObject>().FirstOrDefault(go => go.name == "CarLoaders");
             if (carLoadersGO != null)
             {
@@ -497,6 +499,9 @@ namespace DemoCheats
                             // The string check isn't necessary for the demo, but I'm leaving it for reference.
                             if (_configFile.RandomPartConditionOnSpawn && string.IsNullOrWhiteSpace(spawnCarFrom))
                             {
+                                carDebug.carLoader.CarInfoData.CarFrom = CarFrom.Salon;
+                                carDebug.carLoader.SetRandomMileage(SceneType.Salon);
+                                
                                 // Set a random condition to all the parts.
                                 carDebug.SetRandomPartsCondition();
                             }

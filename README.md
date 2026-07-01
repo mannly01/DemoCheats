@@ -1,16 +1,16 @@
-# DEMO CHEATS - 1.1.1
+# DEMO CHEATS - 1.3.0
 A collection of cheats for the Car Mechanic Simulator 2026 Demo.
 
 ## REQUIREMENTS
 * [MelonLoader 0.7.2](https://github.com/LavaGang/MelonLoader/releases/tag/v0.7.2)
 
-## UPDATE - 1.1.1
-* Added the ability to max out all skills available in the demo
-* Fixed Bug: The bottom four rows of buttons were reversed left/right
-* Fixed Bug: The ESC key was causing multiple UI bugs, so it has been removed as an option
-* Fixed Bug: The cheat menu was able to be opened while viewing the computer
+## UPDATE - 1.3.0
+* Added the ability to move all items from the Shopping List to the Cart by long pressing the 'ACCEPT' key.
+* Bugfix: The Demo Cheats menu could be opened during loading and at the Main Menu.
+* Bugfix: When a car is spawned, the mileage was always 0 and the spawn location was 'unknown'.
 
 ## FEATURES
+* Move all items from the Shopping List to Shopping Cart with one key
 * Add a configured amount of money and XP to the player
 * Add skill points to the player
 * Max out the skills of the player (this is permanent without saving)
@@ -26,6 +26,7 @@ A collection of cheats for the Car Mechanic Simulator 2026 Demo.
 * Delete a car
 
 ## DEFAULT KEYS
+* 'ACCEPT': Long press while the Shopping List is open to move all items to the Shopping Cart
 * R: Opens the Demo Cheats menu
 * None: Cycle through the factory colors and paint the car
 * None: Repair the body parts to 100%

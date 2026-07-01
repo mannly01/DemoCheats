@@ -64,7 +64,7 @@ namespace DemoCheats
             }
 
             commandList = new System.Collections.Generic.List<object>();
-            commandList.Add(new DebugCommand("togglemenu", "Hide this Cheat Menu." + "You can also press ESC key.", "X", () => { }));
+            commandList.Add(new DebugCommand("togglemenu", "Hide this Cheat Menu.", "X", () => { }));
             commandList.Add(new DebugCommand("addmoney", "Add Money to Player.", "Money+", () =>
             {
                 Helpers.AddMoney();
