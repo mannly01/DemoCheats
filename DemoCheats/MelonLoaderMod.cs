@@ -2,7 +2,6 @@
 using Il2CppCMS.Core;
 using Il2CppCMS.DevTools;
 using Il2CppCMS.UI;
-using Il2CppCMS.UI.Description;
 using Il2CppCMS.UI.Helpers;
 using Il2CppCMS.UI.Logic;
 using Il2CppCMS.UI.Logic.Shop.Cart.Containers;
@@ -23,11 +22,15 @@ namespace DemoCheats
 {
     public static class BuildInfo
     {
+#if DEBUG
+        public const string Name = "Demo Cheats (DEBUG)";
+#else
         public const string Name = "Demo Cheats";
+#endif
         public const string Description = "A collection of cheats for the Car Mechanic Simulator 2026 Demo.";
         public const string Author = "mannly82";
         public const string Company = "The Mann Design";
-        public const string Version = "1.2.0";
+        public const string Version = "1.2.1";
         public const string DownloadLink = "https://www.nexusmods.com/carmechanicsimulator2026/mods/6";
         public const string MelonGameCompany = "Red Dot Games";
         public const string MelonGameName = "Car Mechanic Simulator 2026 Demo";
@@ -512,44 +515,47 @@ namespace DemoCheats
 
             if (Input.GetKeyDown(_configFile.OpenCheatMenu))
             {
-                if (GameMode.Get().currentMode == gameMode.CarDrive)
+                if (_currentScene.Equals("garage"))
                 {
-                    UIManager.Get().ShowPopup("Please exit the vehicle first.", PopupType.Normal);
-                    LogService.Instance.WriteToLog("Player is inside a vehicle.");
-                    return;
-                }
-                var windowManager = WindowManager.Instance;
-                if (windowManager == null)
-                    return;
-
-                if (windowManager.activeWindows.count > 0)
-                {
-                    if (windowManager.IsWindowActive(WindowID.Shop))
+                    if (GameMode.Get().currentMode == gameMode.CarDrive)
                     {
-                        var shopWindow = windowManager.GetWindowByID<ShopWindow25>(WindowID.Shop);
-                        if (shopWindow != null)
+                        UIManager.Get().ShowPopup("Please exit the vehicle first.", PopupType.Normal);
+                        LogService.Instance.WriteToLog("Player is inside a vehicle.");
+                        return;
+                    }
+                    var windowManager = WindowManager.Instance;
+                    if (windowManager == null)
+                        return;
+
+                    if (windowManager.activeWindows.count > 0)
+                    {
+                        if (windowManager.IsWindowActive(WindowID.Shop))
                         {
-                            var partsPage = shopWindow.partsPage;
-                            if (partsPage != null && partsPage.ShopType == ShopType25.UsedParts)
+                            var shopWindow = windowManager.GetWindowByID<ShopWindow25>(WindowID.Shop);
+                            if (shopWindow != null)
                             {
-                                if (!CheckIfInputIsFocused())
+                                var partsPage = shopWindow.partsPage;
+                                if (partsPage != null && partsPage.ShopType == ShopType25.UsedParts)
                                 {
-                                    DemoCheatMenu.ToggleCheatMenu();
+                                    if (!CheckIfInputIsFocused())
+                                    {
+                                        DemoCheatMenu.ToggleCheatMenu();
+                                    }
                                 }
                             }
                         }
-                    }
 #if DEBUG
+                        else
+                        {
+                            var activeWindows = windowManager.activeWindows;
+                            LogService.Instance.WriteToLog($"Active Window: {activeWindows.head.Value}");
+                        }
+#endif
+                    }
                     else
                     {
-                        var activeWindows = windowManager.activeWindows;
-                        LogService.Instance.WriteToLog($"Active Window: {activeWindows.head.Value}");
-                    }
-#endif
-                }
-                else
-                {
-                    DemoCheatMenu.ToggleCheatMenu();
+                        DemoCheatMenu.ToggleCheatMenu();
+                    } 
                 }
             }
 

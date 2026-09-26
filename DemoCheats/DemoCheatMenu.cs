@@ -172,20 +172,21 @@ namespace DemoCheats
             int menuPadding = 15 * drawDoubleSizeFor4K;
 
             GUIStyle labelStyle, sliderStyle, sliderStyleThumb, toggleStyle, textStyle, buttoniStyle, toolTipStyle, boxStyle;
-            labelStyle = GUI.skin.label;
+            labelStyle = new GUIStyle(GUI.skin.label);
             labelStyle.fontSize = 14 * drawDoubleSizeFor4K;
+            labelStyle.fontStyle = FontStyle.Bold;
             labelStyle.alignment = TextAnchor.MiddleCenter;
 
-            sliderStyle = GUI.skin.horizontalSlider;
+            sliderStyle = new GUIStyle(GUI.skin.horizontalSlider);
             sliderStyle.fixedHeight = 12 * drawDoubleSizeFor4K;      //default 12
-            sliderStyleThumb = GUI.skin.horizontalSliderThumb;
+            sliderStyleThumb = new GUIStyle(GUI.skin.horizontalSliderThumb);
             sliderStyleThumb.fixedWidth = 12 * drawDoubleSizeFor4K;
             sliderStyleThumb.fixedHeight = 12 * drawDoubleSizeFor4K;
 
-            toggleStyle = GUI.skin.toggle;
+            toggleStyle = new GUIStyle(GUI.skin.toggle);
             toggleStyle.fontSize = 11 * drawDoubleSizeFor4K;
 
-            textStyle = GUI.skin.textField;
+            textStyle = new GUIStyle(GUI.skin.textField);
             textStyle.fontSize = 14 * drawDoubleSizeFor4K;
 
             buttoniStyle = new GUIStyle(GUI.skin.button)
@@ -196,7 +197,7 @@ namespace DemoCheats
             int buttonWidth = 160 * drawDoubleSizeFor4K;
             int buttonHeight = 30 * drawDoubleSizeFor4K;
 
-            toolTipStyle = GUI.skin.label;
+            toolTipStyle = new GUIStyle(GUI.skin.label);
             toolTipStyle.fontSize = 14 * drawDoubleSizeFor4K;
             toolTipStyle.fontStyle = FontStyle.Bold;
             GUI.Label(new Rect(menuX + menuPadding, menuY - 50, menuWidth, 40), GUI.tooltip, toolTipStyle);
@@ -204,7 +205,7 @@ namespace DemoCheats
             string warning = string.Join(nl,
                 "WARNING!  These are CHEATS!",
                 "Please save your game before using them.");
-            boxStyle = GUI.skin.box;
+            boxStyle = new GUIStyle(GUI.skin.box);
             boxStyle.fontSize = 13 * drawDoubleSizeFor4K;
             boxStyle.fontStyle = FontStyle.Bold;
             boxStyle.alignment = TextAnchor.UpperLeft;

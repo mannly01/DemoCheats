@@ -10,7 +10,6 @@ using Il2CppCMS.Shared;
 using Il2CppCMS.UI;
 using Il2CppCMS.UI.Logic;
 using Il2CppCMS.UI.Windows;
-using Il2CppInterop.Runtime.Runtime;
 using Il2CppSystem.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -486,7 +485,17 @@ namespace DemoCheats
                                     carDebug.SpawnRandomCar();
                                     break;
                                 default:
-                                    carDebug.LoadCar(currentSpawnCarID, (_currentSpawnIndex == 3 ? 1 : 0));
+                                    // If the car to spawn is a DNB Censor, randomize the config version,
+                                    // otherwise the config version is 0 (Mayen M5 = 1).
+                                    int _configVersion = (_currentSpawnIndex == 3 ? 1 : 0);
+                                    if (_currentSpawnIndex == 0)
+                                    {
+                                        _configVersion = Il2CppSystem.Security.Cryptography.RandomNumberGenerator.GetInt32(0, 3);
+#if DEBUG
+                                        LogService.Instance.WriteToLog($"DNB Config Version: {_configVersion}");
+#endif
+                                    }
+                                    carDebug.LoadCar(currentSpawnCarID, _configVersion);
                                     break;
                             }
                             // It takes time for the game to populate the car parts.

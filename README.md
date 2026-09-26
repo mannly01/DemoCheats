@@ -1,13 +1,12 @@
-# DEMO CHEATS - 1.2.0
+# DEMO CHEATS - 1.2.1
 A collection of cheats for the Car Mechanic Simulator 2026 Demo.
 
 ## REQUIREMENTS
 * [MelonLoader 0.7.2](https://github.com/LavaGang/MelonLoader/releases/tag/v0.7.2)
 
-## UPDATE - 1.2.0
-* Added the ability to move all items from the Shopping List to the Cart by long pressing the 'ACCEPT' key.
-* Bugfix: The Demo Cheats menu could be opened during loading and at the Main Menu.
-* Bugfix: When a car is spawned, the mileage was always 0 and the spawn location was 'unknown'.
+## UPDATE - 1.2.1
+* Updated the spawn vehicle option to randomize the DNB Censor config between the 3 available configs.
+* Fixed bug: The UI styles were being built incorrectly. Thanks [MeitziQ](https://www.nexusmods.com/profile/MeitziQ/mods)
 
 ## FEATURES
 * Move all items from the Shopping List to Shopping Cart with one key
