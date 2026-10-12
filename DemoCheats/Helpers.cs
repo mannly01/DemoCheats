@@ -21,7 +21,7 @@ namespace DemoCheats
         /// <summary>
         /// Reference to Settings file.
         /// </summary>
-        private static DemoCheatsConfigFile _configFile = DemoCheats.GetConfigFile();
+        private static readonly DemoCheatsConfigFile _configFile = DemoCheats.GetConfigFile();
 
         /// <summary>
         /// Global variable to maintain whether the user is painting a car and the color to paint it.
@@ -127,6 +127,7 @@ namespace DemoCheats
                 else
                 {
                     Time.timeScale = newScale;
+                    _configFile.GameSpeed = newScale;
                     LogService.Instance.WriteToLog($"New Game Speed: {newScale}");
                     UIManager.Get().ShowPopup($"New Game Speed: {newScale}.", PopupType.Normal);
                 }
@@ -143,6 +144,7 @@ namespace DemoCheats
                 else
                 {
                     Time.timeScale = newScale;
+                    _configFile.GameSpeed = newScale;
                     LogService.Instance.WriteToLog($"New Game Speed: {newScale}");
                     UIManager.Get().ShowPopup($"New Game Speed: {newScale}.", PopupType.Normal);
                 }
@@ -189,6 +191,7 @@ namespace DemoCheats
                 else
                 {
                     playerMovement.settings.MaxWalkingSpeed = newSpeed;
+                    _configFile.WalkSpeed = newSpeed;
                     LogService.Instance.WriteToLog($"New Walk Speed: {newSpeed}");
                     UIManager.Get().ShowPopup($"New Walk Speed: {newSpeed}.", PopupType.Normal);
                 }
@@ -205,6 +208,7 @@ namespace DemoCheats
                 else
                 {
                     playerMovement.settings.MaxWalkingSpeed = newSpeed;
+                    _configFile.WalkSpeed = newSpeed;
                     LogService.Instance.WriteToLog($"New Walk Speed: {newSpeed}");
                     UIManager.Get().ShowPopup($"New Walk Speed: {newSpeed}.", PopupType.Normal);
                 }
@@ -214,7 +218,8 @@ namespace DemoCheats
         public static void ToggleFastMount()
         {
             DevSettings.FastMountMode = !DevSettings.FastMountMode;
-            LogService.Instance.WriteToLog($"Fast Mounting: {DevSettings.FastMountMode}");
+            _configFile.FastMount = DevSettings.FastMountMode;
+            LogService.Instance.WriteToLog($"Fast Mounting: {_configFile.FastMount}");
             UIManager.Get().ShowPopup($"Fast Mounting: {DevSettings.FastMountMode}.", PopupType.Normal);
         }
 
@@ -239,6 +244,7 @@ namespace DemoCheats
                 else
                 {
                     playerMovement.settings.MaxRunningSpeed = newSpeed;
+                    _configFile.RunSpeed = newSpeed;
                     LogService.Instance.WriteToLog($"New Run Speed: {newSpeed}");
                     UIManager.Get().ShowPopup($"New Run Speed: {newSpeed}.", PopupType.Normal);
                 }
@@ -255,10 +261,18 @@ namespace DemoCheats
                 else
                 {
                     playerMovement.settings.MaxRunningSpeed = newSpeed;
+                    _configFile.RunSpeed = newSpeed;
                     LogService.Instance.WriteToLog($"New Run Speed: {newSpeed}");
                     UIManager.Get().ShowPopup($"New Run Speed: {newSpeed}.", PopupType.Normal);
                 }
             }
+        }
+        public static void ToggleUnlimitedInventory()
+        {
+            InventoryCommands.UnlimitedInventory = !InventoryCommands.UnlimitedInventory;
+            _configFile.UnlimitedInventory = InventoryCommands.UnlimitedInventory;
+            LogService.Instance.WriteToLog($"Unlimited Inventory: {_configFile.UnlimitedInventory}");
+            UIManager.Get().ShowPopup($"Unlimited Inventory: {InventoryCommands.UnlimitedInventory}.", PopupType.Normal);
         }
 
         /// <summary>

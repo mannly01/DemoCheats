@@ -14,7 +14,7 @@ namespace DemoCheats
         public static bool showHelp = false;
         private static bool isInitialized = false;
 
-        private static string nl = System.Environment.NewLine;
+        private static readonly string nl = System.Environment.NewLine;
         private static int drawDoubleSizeFor4K = 1; // for 4K display, this is 2
 
         public static System.Collections.IEnumerator ToggleConsoleFirstTimeDisplay()
@@ -69,7 +69,7 @@ namespace DemoCheats
             {
                 Helpers.AddMoney();
             }, new DebugCommandAdditionalData { doNotCloseMenu = true }));
-            commandList.Add(new DebugCommand("addxp", "Add XP to the Player", "XP+", () =>
+            commandList.Add(new DebugCommand("addxp", "Add XP to the Player.", "XP+", () =>
             {
                 Helpers.AddXP();
             }, new DebugCommandAdditionalData { doNotCloseMenu = true }));
@@ -85,30 +85,35 @@ namespace DemoCheats
             {
                 Helpers.AddSkillPoints();
             }, new DebugCommandAdditionalData { doNotCloseMenu = true }));
-            commandList.Add(new DebugCommand("maxskills", "Max out the Player skills.", "Max Skills", () =>
+            commandList.Add(new DebugCommand("maxskills", "Max out the Player skills. (This is permanent)", "Max Skills", () =>
             {
                 Helpers.MaxSkills();
             }, new DebugCommandAdditionalData { doNotCloseMenu = true }));
-            commandList.Add(new DebugCommand("walkspeeddown", "Turn down the Walk Speed", "Walk-", () =>
+            commandList.Add(new DebugCommand("walkspeeddown", "Turn down the Walk Speed.", "Walk-", () =>
             {
                 Helpers.AdjustWalkSpeedUp(false);
             }, new DebugCommandAdditionalData { doNotCloseMenu = true }));
-            commandList.Add(new DebugCommand("walkspeedup", "Turn up the Walk Speed", "Walk+", () =>
+            commandList.Add(new DebugCommand("walkspeedup", "Turn up the Walk Speed.", "Walk+", () =>
             {
                 Helpers.AdjustWalkSpeedUp(true);
             }, new DebugCommandAdditionalData { doNotCloseMenu = true }));
-            commandList.Add(new DebugCommand("togglefastmount", "Toggle ON/OFF Fast Mounting of parts", "Toggle Fast Mount", () =>
+            commandList.Add(new DebugCommand("togglefastmount", "Toggle ON/OFF Fast Mounting of parts.", "Toggle Fast Mount", () =>
             {
                 Helpers.ToggleFastMount();
             }, new DebugCommandAdditionalData { doNotCloseMenu = true }));
-            commandList.Add(new DebugCommand("runspeeddown", "Turn down the Run Speed", "Run-", () =>
+            commandList.Add(new DebugCommand("runspeeddown", "Turn down the Run Speed.", "Run-", () =>
             {
                 Helpers.AdjustRunSpeedUp(false);
             }, new DebugCommandAdditionalData { doNotCloseMenu = true }));
-            commandList.Add(new DebugCommand("runspeedup", "Turn up the Run Speed", "Run+", () =>
+            commandList.Add(new DebugCommand("runspeedup", "Turn up the Run Speed.", "Run+", () =>
             {
                 Helpers.AdjustRunSpeedUp(true);
             }, new DebugCommandAdditionalData { doNotCloseMenu = true }));
+            commandList.Add(new DebugCommand("toggleunlimitedinventory", "Toggle ON/OFF the Unlimited Inventory.", "Toggle Unlim. Inv.", () =>
+            {
+                Helpers.ToggleUnlimitedInventory();
+            }, new DebugCommandAdditionalData { doNotCloseMenu = true }));
+            commandList.Add(new DebugCommand("placeholder", "Placeholder", "Placeholder", null));
             commandList.Add(new DebugCommand("paintcar", "Cycle through the factory paint colors.", "Cycle Car Paint", () =>
             {
                 Helpers.CyclePaintColors();
@@ -125,7 +130,7 @@ namespace DemoCheats
             {
                 MelonCoroutines.Start(Helpers.SpawnCar());
             }));
-            // Had to put these on the bottom because clicking them also click the shopping list behind them.
+            // Had to put these on the bottom because clicking them also clicked the shopping list behind them.
             commandList.Add(new DebugCommand("refreshupm", "Refresh the Used Parts Market.", "Refresh", () =>
             {
                 Helpers.RefreshUPM();
@@ -166,7 +171,7 @@ namespace DemoCheats
             }
 
             int menuWidth = 380 * drawDoubleSizeFor4K;
-            int menuHeight = 450 * drawDoubleSizeFor4K;
+            int menuHeight = 495 * drawDoubleSizeFor4K;
             int menuX = Screen.width - (menuWidth + 30);
             int menuY = Screen.height - (menuHeight + 30);
             int menuPadding = 15 * drawDoubleSizeFor4K;
@@ -369,41 +374,35 @@ namespace DemoCheats
                     }
                 }
             }
-            rowY = rowY + buttonHeight;
-
-            // Row label
-            GUI.Label(new Rect(menuX, rowY, menuWidth, buttonHeight), "Car Repair", labelStyle);
-            rowY = rowY + buttonHeight;
+            rowY = rowY + (int)(buttonHeight * 1.5f);
 
             // Fourth Row of buttons
-            for (int i = 12; i < 14; i++)
+            // i = 13 is a Placeholder and not included
+            DebugCommandBase infintiteCommand = commandList[12] as DebugCommandBase;
+            if (infintiteCommand != null)
             {
-                DebugCommandBase command = commandList[i] as DebugCommandBase;
-                if (command != null)
+                string description = infintiteCommand.CommandDescription;
+                int buttonX = 0;
+                buttonWidth = 160 * drawDoubleSizeFor4K;
+                buttonX = menuX + column1;
+                if (GUI.Button(new Rect(buttonX, rowY, buttonWidth, buttonHeight),
+                               new GUIContent(infintiteCommand.CommandFormat, description), buttoniStyle))
                 {
-                    string description = command.CommandDescription;
-                    int buttonX = 0;
-                    buttonWidth = 160 * drawDoubleSizeFor4K;
-                    buttonX = menuX + (i % 2 == 0 ? column1 : column3);
-                    if (GUI.Button(new Rect(buttonX, rowY, buttonWidth, buttonHeight),
-                                   new GUIContent(command.CommandFormat, description), buttoniStyle))
+                    if (infintiteCommand as DebugCommand != null)
                     {
-                        if (command as DebugCommand != null)
+                        if (infintiteCommand.AdditionalData.doNotCloseMenu == false)
                         {
-                            if (command.AdditionalData.doNotCloseMenu == false)
-                            {
-                                ToggleCheatMenu();
-                            }
-                            (command as DebugCommand).Invoke();
-                            return;
+                            ToggleCheatMenu();
                         }
+                        (infintiteCommand as DebugCommand).Invoke();
+                        return;
                     }
                 }
             }
             rowY = rowY + buttonHeight;
 
             // Row label
-            GUI.Label(new Rect(menuX, rowY, menuWidth, buttonHeight), "Car Spawning", labelStyle);
+            GUI.Label(new Rect(menuX, rowY, menuWidth, buttonHeight), "Car Repair", labelStyle);
             rowY = rowY + buttonHeight;
 
             // Fifth Row of buttons
@@ -434,7 +433,7 @@ namespace DemoCheats
             rowY = rowY + buttonHeight;
 
             // Row label
-            GUI.Label(new Rect(menuX, rowY, menuWidth, buttonHeight), "Used Parts Market", labelStyle);
+            GUI.Label(new Rect(menuX, rowY, menuWidth, buttonHeight), "Car Spawning", labelStyle);
             rowY = rowY + buttonHeight;
 
             // Sixth Row of buttons
@@ -465,11 +464,42 @@ namespace DemoCheats
             rowY = rowY + buttonHeight;
 
             // Row label
-            GUI.Label(new Rect(menuX, rowY, menuWidth, buttonHeight), "Miscellaneous", labelStyle);
+            GUI.Label(new Rect(menuX, rowY, menuWidth, buttonHeight), "Used Parts Market", labelStyle);
             rowY = rowY + buttonHeight;
 
             // Seventh Row of buttons
             for (int i = 18; i < 20; i++)
+            {
+                DebugCommandBase command = commandList[i] as DebugCommandBase;
+                if (command != null)
+                {
+                    string description = command.CommandDescription;
+                    int buttonX = 0;
+                    buttonWidth = 160 * drawDoubleSizeFor4K;
+                    buttonX = menuX + (i % 2 == 0 ? column1 : column3);
+                    if (GUI.Button(new Rect(buttonX, rowY, buttonWidth, buttonHeight),
+                                   new GUIContent(command.CommandFormat, description), buttoniStyle))
+                    {
+                        if (command as DebugCommand != null)
+                        {
+                            if (command.AdditionalData.doNotCloseMenu == false)
+                            {
+                                ToggleCheatMenu();
+                            }
+                            (command as DebugCommand).Invoke();
+                            return;
+                        }
+                    }
+                }
+            }
+            rowY = rowY + buttonHeight;
+
+            // Row label
+            GUI.Label(new Rect(menuX, rowY, menuWidth, buttonHeight), "Miscellaneous", labelStyle);
+            rowY = rowY + buttonHeight;
+
+            // Eighth Row of buttons
+            for (int i = 20; i < 22; i++)
             {
                 DebugCommandBase command = commandList[i] as DebugCommandBase;
                 if (command != null)
@@ -526,7 +556,7 @@ namespace DemoCheats
                 _additionalData = additionalData;
         }
     }
-    public class DebugCommandAdditionalData //Minun lisäykset
+    public class DebugCommandAdditionalData
     {
         public bool doNotCloseMenu = false;
         public bool isToggle = false;
@@ -555,7 +585,6 @@ namespace DemoCheats
         {
             this.command = command;
         }
-        //public DebugCommand(string id, string descrption, string format, System.Action<T1> Command) : base(id, descrption, format) {
         public void Invoke(T1 value)
         {
             command.Invoke(value);
