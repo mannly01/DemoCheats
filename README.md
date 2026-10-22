@@ -19,7 +19,7 @@ A collection of cheats for the Car Mechanic Simulator 2027 Demo.
 * Max out the skills of the player (this is permanent without saving)
 * Toggle fast mounting of parts
 * Change the Game Speed
-* Change the Player Walk Run Speed (HOST ONLY)
+* Change the Player Walk Run and Speed (HOST ONLY)
 * Paint the car and wheels an approved factory color by looping through the available ones (HOST ONLY)
 * Repair the body parts to 100% when looking at a car (HOST ONLY)
 * Spawn the 7 available Demo cars (with or w/o random condition) (HOST ONLY)
@@ -62,9 +62,9 @@ A collection of cheats for the Car Mechanic Simulator 2027 Demo.
 ## INSTALLATION (Same as all other MelonLoader mods)
 * Install [MelonLoader 0.7.3](https://github.com/LavaGang/MelonLoader/releases/tag/v0.7.3) ([MelonLoader.Installer.exe](https://github.com/LavaGang/MelonLoader/releases/download/v0.7.3/MelonLoader.Installer.exe) recommended)
 * Download .zip from [Releases](https://github.com/mannly01/DemoCheats/releases/latest) page
-* Unzip the DemoCheats.dll file to Car Mechanic Simulator 2027 Demo\Mods folder
+* Unzip the DemoCheats.dll file to Car Mechanic Simulator 2026 Demo\Mods folder
 * **The DemoCheats.cfg file is optional but will allow you to edit the default settings**
-- Default Folder: \SteamLibrary\steamapps\common\Car Mechanic Simulator 2027 Demo\Mods\
+- Default Folder: \SteamLibrary\steamapps\common\Car Mechanic Simulator 2026 Demo\Mods\
 
 ## KNOWN ISSUES
 * View [Issues Section](https://github.com/mannly01/DemoCheats/issues)
