@@ -2,6 +2,7 @@
 using Il2CppCMS.Core;
 using Il2CppCMS.UI;
 using MelonLoader;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -9,7 +10,7 @@ namespace DemoCheats
 {
     public class DemoCheatMenu
     {
-        public static System.Collections.Generic.List<object> commandList;
+        public static List<object> commandList;
         public static bool cheatMenuShown = false;
         public static bool showHelp = false;
         private static bool isInitialized = false;
@@ -63,7 +64,7 @@ namespace DemoCheats
                 drawDoubleSizeFor4K = 2;
             }
 
-            commandList = new System.Collections.Generic.List<object>();
+            commandList = new List<object>();
             commandList.Add(new DebugCommand("togglemenu", "Hide this Cheat Menu.", "X", () => { }));
             commandList.Add(new DebugCommand("addmoney", "Add Money to Player.", "Money+", () =>
             {
@@ -92,11 +93,11 @@ namespace DemoCheats
             commandList.Add(new DebugCommand("walkspeeddown", "Turn down the Walk Speed.", "Walk-", () =>
             {
                 Helpers.AdjustWalkSpeedUp(false);
-            }, new DebugCommandAdditionalData { doNotCloseMenu = true }));
+            }, new DebugCommandAdditionalData { doNotCloseMenu = GameState.CurrentNetworkMode != GameNetworkMode.Client }));
             commandList.Add(new DebugCommand("walkspeedup", "Turn up the Walk Speed.", "Walk+", () =>
             {
                 Helpers.AdjustWalkSpeedUp(true);
-            }, new DebugCommandAdditionalData { doNotCloseMenu = true }));
+            }, new DebugCommandAdditionalData { doNotCloseMenu = GameState.CurrentNetworkMode != GameNetworkMode.Client }));
             commandList.Add(new DebugCommand("togglefastmount", "Toggle ON/OFF Fast Mounting of parts.", "Toggle Fast Mount", () =>
             {
                 Helpers.ToggleFastMount();
@@ -104,20 +105,20 @@ namespace DemoCheats
             commandList.Add(new DebugCommand("runspeeddown", "Turn down the Run Speed.", "Run-", () =>
             {
                 Helpers.AdjustRunSpeedUp(false);
-            }, new DebugCommandAdditionalData { doNotCloseMenu = true }));
+            }, new DebugCommandAdditionalData { doNotCloseMenu = GameState.CurrentNetworkMode != GameNetworkMode.Client }));
             commandList.Add(new DebugCommand("runspeedup", "Turn up the Run Speed.", "Run+", () =>
             {
                 Helpers.AdjustRunSpeedUp(true);
-            }, new DebugCommandAdditionalData { doNotCloseMenu = true }));
+            }, new DebugCommandAdditionalData { doNotCloseMenu = GameState.CurrentNetworkMode != GameNetworkMode.Client }));
             commandList.Add(new DebugCommand("toggleunlimitedinventory", "Toggle ON/OFF the Unlimited Inventory.", "Toggle Unlim. Inv.", () =>
             {
                 Helpers.ToggleUnlimitedInventory();
-            }, new DebugCommandAdditionalData { doNotCloseMenu = true }));
+            }, new DebugCommandAdditionalData { doNotCloseMenu = GameState.CurrentNetworkMode != GameNetworkMode.Client }));
             commandList.Add(new DebugCommand("placeholder", "Placeholder", "Placeholder", null));
             commandList.Add(new DebugCommand("paintcar", "Cycle through the factory paint colors.", "Cycle Car Paint", () =>
             {
                 Helpers.CyclePaintColors();
-            }, new DebugCommandAdditionalData { doNotCloseMenu = true }));
+            }, new DebugCommandAdditionalData { doNotCloseMenu = GameState.CurrentNetworkMode != GameNetworkMode.Client }));
             commandList.Add(new DebugCommand("repaircar", "Repair the car's body parts.", "Repair Body Parts", () =>
             {
                 Helpers.RepairCar();
@@ -125,7 +126,7 @@ namespace DemoCheats
             commandList.Add(new DebugCommand("cyclenewcar", "Cycle through the available cars to spawn.", "Cycle Spawn Cars", () =>
             {
                 Helpers.CycleSpawnCar();
-            }, new DebugCommandAdditionalData { doNotCloseMenu = true }));
+            }, new DebugCommandAdditionalData { doNotCloseMenu = GameState.CurrentNetworkMode != GameNetworkMode.Client }));
             commandList.Add(new DebugCommand("spawncar", "Spawn the selected car.", "Spawn Car", () =>
             {
                 MelonCoroutines.Start(Helpers.SpawnCar());
@@ -134,11 +135,11 @@ namespace DemoCheats
             commandList.Add(new DebugCommand("refreshupm", "Refresh the Used Parts Market.", "Refresh", () =>
             {
                 Helpers.RefreshUPM();
-            }, new DebugCommandAdditionalData { doNotCloseMenu = true }));
+            }, new DebugCommandAdditionalData { doNotCloseMenu = GameState.CurrentNetworkMode != GameNetworkMode.Client }));
             commandList.Add(new DebugCommand("toggleupm", "Toggle non-DNB Censor parts in the UPM.", "Toggle DNB Parts", () =>
             {
                 Helpers.ToggleUPM();
-            }, new DebugCommandAdditionalData { doNotCloseMenu = true }));
+            }, new DebugCommandAdditionalData { doNotCloseMenu = GameState.CurrentNetworkMode != GameNetworkMode.Client }));
             commandList.Add(new DebugCommand("toggledemolimits", "Toggle ON/OFF the demo world limits.", "Toggle Demo Limits", () =>
             {
                 Helpers.ToggleDemoWorldLimits();

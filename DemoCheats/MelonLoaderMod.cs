@@ -30,13 +30,13 @@ namespace DemoCheats
         public const string Author = "mannly82";
         public const string Company = "The Mann Design";
 #if DEBUG
-        public const string Version = "1.3.99";
+        public const string Version = "2.0.99";
 #else
-        public const string Version = "1.3.0";
+        public const string Version = "2.0.0";
 #endif
         public const string DownloadLink = "https://www.nexusmods.com/carmechanicsimulator2026/mods/6";
         public const string MelonGameCompany = "Red Dot Games";
-        public const string MelonGameName = "Car Mechanic Simulator 2026 Demo";
+        public const string MelonGameName = "Car Mechanic Simulator 2027 Demo";
     }
 
     /// <summary>
@@ -307,20 +307,19 @@ namespace DemoCheats
         /// <summary>
         /// Reference to Settings file.
         /// </summary>
+        public static DemoCheatsConfigFile GetConfigFile() => _configFile;
         private static DemoCheatsConfigFile _configFile;
-        public static DemoCheatsConfigFile GetConfigFile() { return _configFile; }
 
         /// <summary>
         /// Global reference to the current scene.
         /// </summary>
+        public static string GetCurrentScene() => _currentScene;
         private static string _currentScene = string.Empty;
-        public static string GetCurrentScene() { return _currentScene; }
 
+        // These are the mapped keys for accept and exit/close.
         private InputAction _enterAction;
         private InputAction _enterHoldAction;
         private InputAction _exitAction;
-
-        private readonly Dictionary<string, string> _partPrices = new Dictionary<string, string>();
 
         public override void OnInitializeMelon()
         {
@@ -402,80 +401,116 @@ namespace DemoCheats
 #endif
                 }
                 GetBoundKeys();
+                
+                // Saved for reference
+//                // Get the Network Runner and populate networking references.
+//                var networkRunners = NetworkRunner.Instances.TryCast<Il2CppSystem.Collections.Generic.List<NetworkRunner>>();
+//                if (networkRunners != null)
+//                {
+//                    foreach (var networkRunner in networkRunners)
+//                    {
+//                        if (networkRunner.GetName().ToLower().Contains("clone"))
+//                        {
+//                            _netRunner = networkRunner;
+//                            if (NetRunner == null)
+//                            {
+//                                LogService.Instance.WriteToLog("NetworkRunner is null");
+//                            }
+//#if DEBUG
+//                            else
+//                            {
+//                                LogService.Instance.WriteToLog($"IsInSession: {NetRunner.IsInSession}");
+//                                LogService.Instance.WriteToLog($"IsSinglePlayer: {NetRunner.IsSinglePlayer}");
+//                                LogService.Instance.WriteToLog($"IsServer: {NetRunner.IsServer}");
+//                                LogService.Instance.WriteToLog($"IsClient: {NetRunner.IsClient}");
+//                            } 
+//#endif
+//                        }
+//                    }
+//                }
+#if DEBUG
+                LogService.Instance.WriteToLog($"GameState: {GameState.CurrentNetworkMode}");
+#endif
 
                 System.Collections.IEnumerator WaitForSceneLoad()
                 {
                     yield return new WaitForSeconds(1f);
-                    while (SceneLoader.Instance.loadingScene)
+                    while (SceneLoader.Instance.IsLoadingScene)
                         yield return new WaitForSeconds(1);
 
-                    GameObject playerControllerGO =
-                        Resources.FindObjectsOfTypeAll<GameObject>()
-                        .FirstOrDefault(go => go.name == "Player Controller (1)");
-                    if (playerControllerGO != null)
+                    var playerControllerGOs =
+                        Resources.FindObjectsOfTypeAll<GameObject>().Where(go => go.name.Contains("Player Controller ("));
+                    if (playerControllerGOs.Any())
                     {
-#if DEBUG
-                        LogService.Instance.WriteToLog($"GameSpeed Before: {Time.timeScale}"); 
-#endif
-                        if (Time.timeScale != _configFile.GameSpeed)
+                        foreach (var playerControllerGO in playerControllerGOs)
                         {
-                            Time.timeScale = _configFile.GameSpeed;
+                            PlayerMovement playerMovement = playerControllerGO.GetComponent<PlayerMovement>();
 #if DEBUG
-                            LogService.Instance.WriteToLog($"GameSpeed After: {Time.timeScale}"); 
+                            LogService.Instance.WriteToLog($"WalkSpeed Before: {playerMovement.settings.MaxWalkingSpeed}");
 #endif
-                        }
-                        PlayerMovement playerMovement = playerControllerGO.GetComponent<PlayerMovement>();
+                            if (playerMovement.settings.MaxWalkingSpeed != _configFile.WalkSpeed)
+                            {
+                                playerMovement.settings.MaxWalkingSpeed = _configFile.WalkSpeed;
 #if DEBUG
-                        LogService.Instance.WriteToLog($"WalkSpeed Before: {playerMovement.settings.MaxWalkingSpeed}"); 
+                                LogService.Instance.WriteToLog($"WalkSpeed After: {playerMovement.settings.MaxWalkingSpeed}");
 #endif
-                        if (playerMovement.settings.MaxWalkingSpeed != _configFile.WalkSpeed)
-                        {
-                            playerMovement.settings.MaxWalkingSpeed = _configFile.WalkSpeed;
+                            }
 #if DEBUG
-                            LogService.Instance.WriteToLog($"WalkSpeed After: {playerMovement.settings.MaxWalkingSpeed}"); 
+                            LogService.Instance.WriteToLog($"RunSpeed Before: {playerMovement.settings.MaxRunningSpeed}");
 #endif
-                        }
+                            if (playerMovement.settings.MaxRunningSpeed != _configFile.RunSpeed)
+                            {
+                                playerMovement.settings.MaxRunningSpeed = _configFile.RunSpeed;
 #if DEBUG
-                        LogService.Instance.WriteToLog($"RunSpeed Before: {playerMovement.settings.MaxRunningSpeed}"); 
+                                LogService.Instance.WriteToLog($"RunSpeed After: {playerMovement.settings.MaxRunningSpeed}");
 #endif
-                        if (playerMovement.settings.MaxRunningSpeed != _configFile.RunSpeed)
-                        {
-                            playerMovement.settings.MaxRunningSpeed = _configFile.RunSpeed;
-#if DEBUG
-                            LogService.Instance.WriteToLog($"RunSpeed After: {playerMovement.settings.MaxRunningSpeed}"); 
-#endif
-                        }
-#if DEBUG
-                        LogService.Instance.WriteToLog($"FastMount Before: {DevSettings.FastMountMode}"); 
-#endif
-                        if (DevSettings.FastMountMode != _configFile.FastMount)
-                        {
-                            DevSettings.FastMountMode = _configFile.FastMount;
-#if DEBUG
-                            LogService.Instance.WriteToLog($"FastMount After: {DevSettings.FastMountMode}"); 
-#endif
-                        }
-#if DEBUG
-                        LogService.Instance.WriteToLog($"Unlimited Inventory Before: {InventoryCommands.UnlimitedInventory}"); 
-#endif
-                        if (InventoryCommands.UnlimitedInventory != _configFile.UnlimitedInventory)
-                        {
-                            InventoryCommands.UnlimitedInventory = _configFile.UnlimitedInventory;
-#if DEBUG
-                            LogService.Instance.WriteToLog($"Unlimited Inventory After: {InventoryCommands.UnlimitedInventory}");
-#endif
+                            }
                         }
                     }
                     else
                     {
+                        LogService.Instance.WriteToLog("Player Controllers not found");
+                        yield return null;
+                    }
+
 #if DEBUG
-                        LogService.Instance.WriteToLog("Player Controller null");
+                    LogService.Instance.WriteToLog($"GameSpeed Before: {Time.timeScale}"); 
+#endif
+                    if (Time.timeScale != _configFile.GameSpeed)
+                    {
+                        Time.timeScale = _configFile.GameSpeed;
+#if DEBUG
+                        LogService.Instance.WriteToLog($"GameSpeed After: {Time.timeScale}"); 
+#endif
+                    }
+                        
+#if DEBUG
+                    LogService.Instance.WriteToLog($"FastMount Before: {DevSettings.FastMountMode}");
+#endif
+                    if (DevSettings.FastMountMode != _configFile.FastMount)
+                    {
+                        DevSettings.FastMountMode = _configFile.FastMount;
+#if DEBUG
+                        LogService.Instance.WriteToLog($"FastMount After: {DevSettings.FastMountMode}");
+#endif
+                    }
+#if DEBUG
+                    LogService.Instance.WriteToLog($"Unlimited Inventory Before: {InventoryCommands.UnlimitedInventory}");
+#endif
+                    if (InventoryCommands.UnlimitedInventory != _configFile.UnlimitedInventory)
+                    {
+                        InventoryCommands.UnlimitedInventory = _configFile.UnlimitedInventory;
+#if DEBUG
+                        LogService.Instance.WriteToLog($"Unlimited Inventory After: {InventoryCommands.UnlimitedInventory}");
 #endif
                     }
 
                     yield return null;
                 }
-                MelonCoroutines.Start(WaitForSceneLoad());
+                if (GameState.CurrentNetworkMode != GameNetworkMode.Client)
+                {
+                    MelonCoroutines.Start(WaitForSceneLoad());
+                }
             }
         }
         public override void OnDeinitializeMelon()
@@ -512,6 +547,9 @@ namespace DemoCheats
             {
                 if (!CheckIfInputIsFocused())
                 {
+                    LogService.Instance.WriteToLog("Debug Key (J) Pressed");
+                    Helpers.OpenCar();
+
                     //var gameManager = GameManager.Instance;
                     //if (gameManager == null)
                     //    return;
@@ -627,7 +665,7 @@ namespace DemoCheats
             {
                 if (_currentScene.Equals("garage"))
                 {
-                    if (GameMode.Get().currentMode == gameMode.CarDrive)
+                    if (Il2CppCMS.Core.GameMode.Get().currentMode == gameMode.CarDrive)
                     {
                         UIManager.Get().ShowPopup("Please exit the vehicle first.", PopupType.Normal);
                         LogService.Instance.WriteToLog("Player is inside a vehicle.");
@@ -641,11 +679,11 @@ namespace DemoCheats
                     {
                         if (windowManager.IsWindowActive(WindowID.Shop))
                         {
-                            var shopWindow = windowManager.GetWindowByID<ShopWindow25>(WindowID.Shop);
+                            var shopWindow = windowManager.GetWindowByID<ShopWindow>(WindowID.Shop);
                             if (shopWindow != null)
                             {
                                 var partsPage = shopWindow.partsPage;
-                                if (partsPage != null && partsPage.ShopType == ShopType25.UsedParts)
+                                if (partsPage != null && partsPage.ShopType == ShopType.UsedParts)
                                 {
                                     if (!CheckIfInputIsFocused())
                                     {
@@ -672,26 +710,46 @@ namespace DemoCheats
             if (Input.GetKeyDown(_configFile.PaintCar) &&
                 _configFile.PaintCar != KeyCode.None)
             {
-                if (_currentScene.Equals("garage"))
+                // Check that the user is not a client in a multiplayer session.
+                if (GameState.CurrentNetworkMode != GameNetworkMode.Client)
                 {
-                    // Check that the user isn't typing in an InputField.
-                    if (!CheckIfInputIsFocused())
+                    if (_currentScene.Equals("garage"))
                     {
-                        Helpers.CyclePaintColors();
+                        // Check that the user isn't typing in an InputField.
+                        if (!CheckIfInputIsFocused())
+                        {
+                            Helpers.CyclePaintColors();
+                        }
                     }
+                }
+                else
+                {
+                    LogService.Instance.WriteToLog("User is in a multiplayer session");
+                    UIManager.Get().ShowInfoWindow("You are in a multiplayer session.\n\nThis feature is disabled for the client.");
+                    return;
                 }
             }
 
             if (Input.GetKey(_configFile.RepairBody) &&
                 _configFile.RepairBody != KeyCode.None)
             {
-                if (_currentScene.Equals("garage"))
+                // Check that the user is not a client in a multiplayer session.
+                if (GameState.CurrentNetworkMode != GameNetworkMode.Client)
                 {
-                    // Check that the user isn't typing in an InputField.
-                    if (!CheckIfInputIsFocused())
+                    if (_currentScene.Equals("garage"))
                     {
-                        Helpers.RepairCar();
+                        // Check that the user isn't typing in an InputField.
+                        if (!CheckIfInputIsFocused())
+                        {
+                            Helpers.RepairCar();
+                        }
                     }
+                }
+                else
+                {
+                    LogService.Instance.WriteToLog("User is in a multiplayer session");
+                    UIManager.Get().ShowInfoWindow("You are in a multiplayer session.\n\nThis feature is disabled for the client.");
+                    return;
                 }
             }
 
@@ -703,18 +761,27 @@ namespace DemoCheats
             {
                 if (!CheckIfInputIsFocused())
                 {
-                    _configFile.SetPartConditionLowerBy10();
-                    // The standard Popup doesn't show over the UI,
-                    // so show an Info Window if a UIWindow is displayed.
-                    if (WindowManager.Instance.activeWindows.count > 0)
+                    if (GameState.CurrentNetworkMode == GameNetworkMode.SinglePlayer)
                     {
-                        UIManager.Get().ShowInfoWindow($"Transfer Part Condition: {_configFile.MinPartCondition}%", false);
+                        _configFile.SetPartConditionLowerBy10();
+                        // The standard Popup doesn't show over the UI,
+                        // so show an Info Window if a UIWindow is displayed.
+                        if (WindowManager.Instance.activeWindows.count > 0)
+                        {
+                            UIManager.Get().ShowInfoWindow($"Transfer Part Condition: {_configFile.MinPartCondition}%", false);
+                        }
+                        else
+                        {
+                            UIManager.Get().ShowPopup($"Transfer Part Condition: {_configFile.MinPartCondition}%", PopupType.Normal);
+                        }
+                        LogService.Instance.WriteToLog($"Transfer Part Condition: {_configFile.MinPartCondition}%"); 
                     }
                     else
                     {
-                        UIManager.Get().ShowPopup($"Transfer Part Condition: {_configFile.MinPartCondition}%", PopupType.Normal);
+                        LogService.Instance.WriteToLog("User is in a multiplayer session");
+                        UIManager.Get().ShowInfoWindow("You are in a multiplayer session.\n\nThis feature is disabled until more testing is complete.");
+                        return;
                     }
-                    LogService.Instance.WriteToLog($"Transfer Part Condition: {_configFile.MinPartCondition}%");
                 }
 #if DEBUG
 
@@ -730,18 +797,27 @@ namespace DemoCheats
             {
                 if (!CheckIfInputIsFocused())
                 {
-                    _configFile.SetPartConditionHigherBy10();
-                    // The standard Popup doesn't show over the UI,
-                    // so show an Info Window if a UIWindow is displayed.
-                    if (WindowManager.Instance.activeWindows.count > 0)
+                    if (GameState.CurrentNetworkMode == GameNetworkMode.SinglePlayer)
                     {
-                        UIManager.Get().ShowInfoWindow($"Transfer Part Condition: {_configFile.MinPartCondition}%", false);
+                        _configFile.SetPartConditionHigherBy10();
+                        // The standard Popup doesn't show over the UI,
+                        // so show an Info Window if a UIWindow is displayed.
+                        if (WindowManager.Instance.activeWindows.count > 0)
+                        {
+                            UIManager.Get().ShowInfoWindow($"Transfer Part Condition: {_configFile.MinPartCondition}%", false);
+                        }
+                        else
+                        {
+                            UIManager.Get().ShowPopup($"Transfer Part Condition: {_configFile.MinPartCondition}%", PopupType.Normal);
+                        }
+                        LogService.Instance.WriteToLog($"Transfer Part Condition: {_configFile.MinPartCondition}%");
                     }
                     else
                     {
-                        UIManager.Get().ShowPopup($"Transfer Part Condition: {_configFile.MinPartCondition}%", PopupType.Normal);
+                        LogService.Instance.WriteToLog("User is in a multiplayer session");
+                        UIManager.Get().ShowInfoWindow("You are in a multiplayer session.\n\nThis feature is disabled until more testing is complete.");
+                        return;
                     }
-                    LogService.Instance.WriteToLog($"Transfer Part Condition: {_configFile.MinPartCondition}%");
                 }
 #if DEBUG
                 else
@@ -763,8 +839,17 @@ namespace DemoCheats
                     // Check that the user is in the Garage.
                     if (_currentScene.Equals("garage"))
                     {
-                        // Do work on the Inventory or Warehouse.
-                        TransferAll.MoveInventoryOrWarehouseItems();
+                        if (GameState.CurrentNetworkMode == GameNetworkMode.SinglePlayer)
+                        {
+                            // Do work on the Inventory or Warehouse.
+                            TransferAll.MoveInventoryOrWarehouseItems();
+                        }
+                        else
+                        {
+                            LogService.Instance.WriteToLog("User is in a multiplayer session");
+                            UIManager.Get().ShowInfoWindow("You are in a multiplayer session.\n\nThis feature is disabled until more testing is complete.");
+                            return;
+                        }
                     }
                 }
 #if DEBUG

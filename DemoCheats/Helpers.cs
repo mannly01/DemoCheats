@@ -1,7 +1,6 @@
 ﻿using Il2Cpp;
 using Il2CppCMS.Core;
 using Il2CppCMS.Core.Car;
-using Il2CppCMS.Core.Car.Containers;
 using Il2CppCMS.DevTools;
 using Il2CppCMS.DevTools.QC;
 using Il2CppCMS.Player.Controller;
@@ -10,7 +9,7 @@ using Il2CppCMS.Shared;
 using Il2CppCMS.UI;
 using Il2CppCMS.UI.Logic;
 using Il2CppCMS.UI.Windows;
-using Il2CppSystem.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -30,21 +29,35 @@ namespace DemoCheats
         private static int _currentColorIndex = -1;
         private static CarLoader _currentCar;
 
-        private static readonly System.Collections.Generic.List<string> _spawnCarIDs = new System.Collections.Generic.List<string>()
+        private static readonly List<string> _spawnCarIDs = new List<string>()
         {
+            "car_boltnevada",
             "car_dnbcensor",
             "car_katagiritamagobp",
+            "car_lacroixmodiquer",
             "car_luxorstreamlinermk3",
             "car_mayenm5",
             "car_salemariesmk3"
         };
-        private static readonly System.Collections.Generic.List<string> _spawnCarNames = new System.Collections.Generic.List<string>()
+        private static readonly List<string> _spawnCarNames = new List<string>()
         {
+            "Bolt Nevada",
             "DNB Censor",
             "Katagiri Tamago BP",
+            "Lacroix Modique R",
             "Luxor Streamliner Mk3",
             "Mayen M5",
             "Salem Aries MK3"
+        };
+        private static readonly List<List<int>> _spawnCarConfigs = new List<List<int>>()
+        {
+            new List<int>() { 0, 3, 4 },
+            new List<int>() { 0, 3 },
+            new List<int>() { 0 },
+            new List<int>() { 2 },
+            new List<int>() { 0 },
+            new List<int>() { 1 },
+            new List<int>() { 0 }
         };
         private static int _currentSpawnIndex = 0;
 
@@ -75,7 +88,7 @@ namespace DemoCheats
             // Get a reference to the Shared Game Data Manager.
             var sharedGameDataManager = SharedGameDataManager.Instance;
             // Add the money amount from the config file to the player.
-            sharedGameDataManager.AddMoneyRpc(_configFile.MoneyAmount);
+            sharedGameDataManager.AddMoneyInternal(_configFile.MoneyAmount);
             LogService.Instance.WriteToLog($"Added ${_configFile.MoneyAmount:C}");
             UIManager.Get().ShowPopup($"Added ${_configFile.MoneyAmount:C}.", PopupType.Normal);
 #if DEBUG
@@ -176,43 +189,53 @@ namespace DemoCheats
         /// <param name="up"></param>
         public static void AdjustWalkSpeedUp(bool up)
         {
-            GameObject playerControllerGO = 
-                Resources.FindObjectsOfTypeAll<GameObject>().FirstOrDefault(go => go.name == "Player Controller (1)");
-            PlayerMovement playerMovement = playerControllerGO.GetComponent<PlayerMovement>();
+            if (GameState.CurrentNetworkMode == GameNetworkMode.Client)
+            {
+                LogService.Instance.WriteToLog("User is a multiplayer client");
+                UIManager.Get().ShowInfoWindow("You are in a multiplayer session.\n\nThis feature is disabled for the client.\nThe host will adjust both players' walk speed.");
+                return;
+            }
+
+            float newSpeed = 0.0f;
             if (up)
             {
-                float newSpeed = playerMovement.settings.MaxWalkingSpeed += 1.0f;
+                newSpeed = _configFile.WalkSpeed += 1.0f;
                 if (newSpeed > 20)
                 {
                     LogService.Instance.WriteToLog("Max Walk Speed reached");
                     UIManager.Get().ShowPopup("Max Walk Speed reached.", PopupType.Normal);
                     return;
                 }
-                else
-                {
-                    playerMovement.settings.MaxWalkingSpeed = newSpeed;
-                    _configFile.WalkSpeed = newSpeed;
-                    LogService.Instance.WriteToLog($"New Walk Speed: {newSpeed}");
-                    UIManager.Get().ShowPopup($"New Walk Speed: {newSpeed}.", PopupType.Normal);
-                }
             }
             else
             {
-                float newSpeed = playerMovement.settings.MaxWalkingSpeed -= 1.0f;
+                newSpeed = _configFile.WalkSpeed -= 1.0f;
                 if (newSpeed < 0.0f)
                 {
                     LogService.Instance.WriteToLog("Min Walk Speed reached");
                     UIManager.Get().ShowPopup("Min Walk Speed reached.", PopupType.Normal);
                     return;
                 }
-                else
+            }
+
+            var playerControllerGOs =
+                    Resources.FindObjectsOfTypeAll<GameObject>().Where(go => go.name.Contains("Player Controller ("));
+            if (playerControllerGOs.Any())
+            {
+                foreach (var playerControllerGO in playerControllerGOs)
                 {
+                    PlayerMovement playerMovement = playerControllerGO.GetComponent<PlayerMovement>();
                     playerMovement.settings.MaxWalkingSpeed = newSpeed;
                     _configFile.WalkSpeed = newSpeed;
-                    LogService.Instance.WriteToLog($"New Walk Speed: {newSpeed}");
-                    UIManager.Get().ShowPopup($"New Walk Speed: {newSpeed}.", PopupType.Normal);
                 }
             }
+            else
+            {
+                LogService.Instance.WriteToLog("Player Controllers not found");
+                return;
+            }
+            LogService.Instance.WriteToLog($"New Walk Speed: {newSpeed}");
+            UIManager.Get().ShowPopup($"New Walk Speed: {newSpeed}.", PopupType.Normal);
         }
 
         public static void ToggleFastMount()
@@ -229,46 +252,63 @@ namespace DemoCheats
         /// <param name="up"></param>
         public static void AdjustRunSpeedUp(bool up)
         {
-            GameObject playerControllerGO =
-                Resources.FindObjectsOfTypeAll<GameObject>().FirstOrDefault(go => go.name == "Player Controller (1)");
-            PlayerMovement playerMovement = playerControllerGO.GetComponent<PlayerMovement>();
+            if (GameState.CurrentNetworkMode == GameNetworkMode.Client)
+            {
+                LogService.Instance.WriteToLog("User is a multiplayer client");
+                UIManager.Get().ShowInfoWindow("You are in a multiplayer session.\n\nThis feature is disabled for the client.\nThe host will adjust both players' run speed.");
+                return;
+            }
+
+            float newSpeed = 0.0f;
             if (up)
             {
-                float newSpeed = playerMovement.settings.MaxRunningSpeed += 1.0f;
+                newSpeed = _configFile.RunSpeed += 1.0f;
                 if (newSpeed > 20)
                 {
                     LogService.Instance.WriteToLog("Max Run Speed reached");
                     UIManager.Get().ShowPopup("Max Run Speed reached.", PopupType.Normal);
                     return;
                 }
-                else
-                {
-                    playerMovement.settings.MaxRunningSpeed = newSpeed;
-                    _configFile.RunSpeed = newSpeed;
-                    LogService.Instance.WriteToLog($"New Run Speed: {newSpeed}");
-                    UIManager.Get().ShowPopup($"New Run Speed: {newSpeed}.", PopupType.Normal);
-                }
             }
             else
             {
-                float newSpeed = playerMovement.settings.MaxRunningSpeed -= 1.0f;
+                newSpeed = _configFile.RunSpeed -= 1.0f;
                 if (newSpeed < 1.0f)
                 {
                     LogService.Instance.WriteToLog("Min Run Speed reached");
                     UIManager.Get().ShowPopup("Min Run Speed reached.", PopupType.Normal);
                     return;
                 }
-                else
+            }
+
+            var playerControllerGOs =
+                Resources.FindObjectsOfTypeAll<GameObject>().Where(go => go.name.Contains("Player Controller ("));
+            if (playerControllerGOs.Any())
+            {
+                foreach (var playerControllerGO in playerControllerGOs)
                 {
+                    PlayerMovement playerMovement = playerControllerGO.GetComponent<PlayerMovement>();
                     playerMovement.settings.MaxRunningSpeed = newSpeed;
                     _configFile.RunSpeed = newSpeed;
-                    LogService.Instance.WriteToLog($"New Run Speed: {newSpeed}");
-                    UIManager.Get().ShowPopup($"New Run Speed: {newSpeed}.", PopupType.Normal);
                 }
             }
+            else
+            {
+                LogService.Instance.WriteToLog("Player Controllers not found");
+                return;
+            }
+            LogService.Instance.WriteToLog($"New Run Speed: {newSpeed}");
+            UIManager.Get().ShowPopup($"New Run Speed: {newSpeed}.", PopupType.Normal);
         }
         public static void ToggleUnlimitedInventory()
         {
+            if (GameState.CurrentNetworkMode == GameNetworkMode.Client)
+            {
+                LogService.Instance.WriteToLog("User is a multiplayer client");
+                UIManager.Get().ShowInfoWindow("You are in a multiplayer session.\n\nThis feature is controlled by the host.");
+                return;
+            }
+
             InventoryCommands.UnlimitedInventory = !InventoryCommands.UnlimitedInventory;
             _configFile.UnlimitedInventory = InventoryCommands.UnlimitedInventory;
             LogService.Instance.WriteToLog($"Unlimited Inventory: {_configFile.UnlimitedInventory}");
@@ -280,18 +320,23 @@ namespace DemoCheats
         /// </summary>
         public static void CyclePaintColors()
         {
+            if (GameState.CurrentNetworkMode == GameNetworkMode.Client)
+            {
+                LogService.Instance.WriteToLog("User is a multiplayer client");
+                UIManager.Get().ShowInfoWindow("You are in a multiplayer session.\n\nThis feature is disabled for the client.");
+                return;
+            }
+
             if (!_isPainting)
             {
                 // Get the GameObject being looked at.
                 GameObject goInView = GameScript.Get().GetIOMouseOverGO();
                 // Get the car being looked at.
-                CarLoader carInView = GameScript.Get().GetIOMouseOverCarLoader2();
-                // Get the part being looked at.
-                CarPart carPart = GameScript.Get().GetIOMouseOverCarLoader();
+                CarLoader carInView = GameScript.Get().GetIOMouseOverCarLoader();
                 // If the user is looking at a car and a part, paint the car.
                 // The game stores the last car looked at sometimes.
                 // If the car is not null but the part is, the user isn't looking at a car.
-                if (carInView != null && carPart != null)
+                if (carInView != null && goInView != null)
                 {
                     if (_currentCar == null)
                     {
@@ -331,10 +376,10 @@ namespace DemoCheats
                             goInView.name.Contains("tire"))
                         {
                             var wheels = carInView.Wheels;
-                            wheels.FrontLeftWheelHandle.GetComponent<PartScript>().SetColor(currentColor.Color);
-                            wheels.FrontRightWheelHandle.GetComponent<PartScript>().SetColor(currentColor.Color);
-                            wheels.RearLeftWheelHandle.GetComponent<PartScript>().SetColor(currentColor.Color);
-                            wheels.RearRightWheelHandle.GetComponent<PartScript>().SetColor(currentColor.Color);
+                            wheels.frontLeftWheel.GetComponent<PartScript>().SetColor(currentColor.Color);
+                            wheels.frontRightWheel.GetComponent<PartScript>().SetColor(currentColor.Color);
+                            wheels.rearLeftWheel.GetComponent<PartScript>().SetColor(currentColor.Color);
+                            wheels.rearRightWheel.GetComponent<PartScript>().SetColor(currentColor.Color);
                         }
                         //else if (carPart.name.Contains("headlight"))
                         //{
@@ -398,17 +443,24 @@ namespace DemoCheats
         /// </summary>
         public static void RepairCar()
         {
+            if (GameState.CurrentNetworkMode == GameNetworkMode.Client)
+            {
+                LogService.Instance.WriteToLog("User is a multiplayer client");
+                UIManager.Get().ShowInfoWindow("You are in a multiplayer session.\n\nThis feature is disabled for the client.");
+                return;
+            }
+
+            // Get the GameObject being looked at.
+            GameObject goInView = GameScript.Get().GetIOMouseOverGO();
             // Get the car being looked at.
-            CarLoader carInView = GameScript.Get().GetIOMouseOverCarLoader2();
-            // Get the part being looked at.
-            CarPart carPart = GameScript.Get().GetIOMouseOverCarLoader();
-            // If the user is looking at a car and a part, paint the car.
+            CarLoader carInView = GameScript.Get().GetIOMouseOverCarLoader();
+            // If the user is looking at a car and a part, repair the car.
             // The game stores the last car looked at sometimes.
             // If the car is not null but the part is, the user isn't looking at a car.
-            if (carInView != null && carPart != null)
+            if (carInView != null && goInView != null)
             {
                 // This is a developer function and may not work in future updates.
-                carInView.Dev_RepairAllBody();
+                carInView.RepairAllBodyParts();
             }
             else
             {
@@ -423,6 +475,13 @@ namespace DemoCheats
         /// </summary>
         public static void CycleSpawnCar()
         {
+            if (GameState.CurrentNetworkMode == GameNetworkMode.Client)
+            {
+                LogService.Instance.WriteToLog("User is a multiplayer client");
+                UIManager.Get().ShowInfoWindow("You are in a multiplayer session.\n\nThis feature is disabled for the client.");
+                return;
+            }
+
             _currentSpawnIndex++;
             if (_currentSpawnIndex >= _spawnCarIDs.Count)
             {
@@ -443,8 +502,15 @@ namespace DemoCheats
             if (_configFile == null)
                 yield return null;
 
+            if (GameState.CurrentNetworkMode == GameNetworkMode.Client)
+            {
+                LogService.Instance.WriteToLog("User is a multiplayer client");
+                UIManager.Get().ShowInfoWindow("You are in a multiplayer session.\n\nThis feature is disabled for the client.");
+                yield return null;
+            }
+
             var carLoadersGO = Resources.FindObjectsOfTypeAll<GameObject>().FirstOrDefault(go => go.name == "CarLoaders");
-            if (carLoadersGO != null)
+            if (carLoadersGO != null && GameState.CurrentNetworkMode != GameNetworkMode.Client)
             {
                 int nextIndex = -1;
                 int spawnedCars = 0;
@@ -465,16 +531,13 @@ namespace DemoCheats
                     LogService.Instance.WriteToLog($"Maximum Cars of 10 reached");
                     yield return null;
                 }
-                // Loop through the loaders and spawn a car.
+                // Loop through the loaders and spawns a car.
                 for (int i = 0; i < carLoaders.Length; i++)
                 {
                     var carLoader = carLoaders[i];
                     if (string.IsNullOrWhiteSpace(carLoader.CarID) &&
                         nextIndex == -1)
                     {
-                        // Try moving the car under the road and
-                        // then back after setting the part condition.
-
                         var carDebug = carLoader.GetComponent<CarDebug>();
                         if (carDebug != null)
                         {
@@ -499,17 +562,29 @@ namespace DemoCheats
                                     carDebug.SpawnRandomCar();
                                     break;
                                 default:
-                                    // If the car to spawn is a DNB Censor, randomize the config version,
-                                    // otherwise the config version is 0 (Mayen M5 = 1).
-                                    int _configVersion = (_currentSpawnIndex == 3 ? 1 : 0);
-                                    if (_currentSpawnIndex == 0)
+                                    // Defaults the car config to 0.
+                                    int _configVersion = 0;
+                                    // Gets a list of known car configs for the selected spawn car.
+                                    var _configVersions = _spawnCarConfigs[_currentSpawnIndex];
+                                    // Checks the amount of configs for the spawn car.
+                                    if (_configVersions.Count == 1)
                                     {
-                                        _configVersion = Il2CppSystem.Security.Cryptography.RandomNumberGenerator.GetInt32(0, 3);
-#if DEBUG
-                                        LogService.Instance.WriteToLog($"DNB Config Version: {_configVersion}");
-#endif
+                                        // Only one valid config exists for the spawn car,
+                                        // so set that as the config version (may not be 0).
+                                        _configVersion = _configVersions[0];
                                     }
+                                    else
+                                    {
+                                        // Multiple valid configs exist, so randomize the config and set it.
+                                        int _configVersionIndex = 
+                                            Il2CppSystem.Security.Cryptography.RandomNumberGenerator.GetInt32(0, _configVersions.Count);
+                                        _configVersion = _configVersions[_configVersionIndex];
+                                    }
+                                    // Load the car with a valid config.
                                     carDebug.LoadCar(currentSpawnCarID, _configVersion);
+#if DEBUG
+                                    LogService.Instance.WriteToLog($"Spawned {_spawnCarNames[_currentSpawnIndex]} Config: {_configVersion}");
+#endif
                                     break;
                             }
                             // It takes time for the game to populate the car parts.
@@ -535,6 +610,7 @@ namespace DemoCheats
                             }
                             // This was wrong.
                             // TODO: Find out how to tell if 8 parking spots are taken
+                            // For now, the CarDebug script informs the user.
                             //else
                             //{
                             //    LogService.Instance.WriteToLog($"Maximum Cars Parked in spots");
@@ -562,7 +638,7 @@ namespace DemoCheats
             if (windowManager.activeWindows.count > 0 &&
                 windowManager.IsWindowActive(WindowID.Shop))
             {
-                var shopWindow = windowManager.GetWindowByID<ShopWindow25>(WindowID.Shop);
+                var shopWindow = windowManager.GetWindowByID<ShopWindow>(WindowID.Shop);
                 if (shopWindow != null)
                 {
                     // Saved for reference.
@@ -579,7 +655,7 @@ namespace DemoCheats
                         usedPartsManager.GenerateParts();
                     }
                     var partsPage = shopWindow.partsPage;
-                    if (partsPage != null && partsPage.ShopType == ShopType25.UsedParts)
+                    if (partsPage != null && partsPage.ShopType == ShopType.UsedParts)
                     {
 #if DEBUG
                         LogService.Instance.WriteToLog($"Used Parts Page Active");
@@ -595,7 +671,14 @@ namespace DemoCheats
             }
             else
             {
-                UIManager.Get().ShowPopup("Open the Shop Window first.", PopupType.Normal);
+                if (GameState.CurrentNetworkMode != GameNetworkMode.Client)
+                {
+                    UIManager.Get().ShowPopup("Open the UPM Shop Window first.", PopupType.Normal); 
+                }
+                else
+                {
+                    UIManager.Get().ShowInfoWindow("Open the Used Parts Market Window first.");
+                }
             }
         }
 
@@ -612,7 +695,7 @@ namespace DemoCheats
             if (windowManager.activeWindows.count > 0 &&
                 windowManager.IsWindowActive(WindowID.Shop))
             {
-                var shopWindow = windowManager.GetWindowByID<ShopWindow25>(WindowID.Shop);
+                var shopWindow = windowManager.GetWindowByID<ShopWindow>(WindowID.Shop);
                 if (shopWindow != null)
                 {
                     var usedPartsManager = shopWindow.usedPartsShopManager;
@@ -678,7 +761,7 @@ namespace DemoCheats
                         UIManager.Get().ShowPopup($"Toggled Used Parts Market {(_onlyDNBParts ? "ON" : "OFF")}.", PopupType.Normal);
                     }
                     var partsPage = shopWindow.partsPage;
-                    if (partsPage != null && partsPage.ShopType == ShopType25.UsedParts)
+                    if (partsPage != null && partsPage.ShopType == ShopType.UsedParts)
                     {
 #if DEBUG
                         LogService.Instance.WriteToLog($"Used Parts Page Active");
@@ -694,7 +777,14 @@ namespace DemoCheats
             }
             else
             {
-                UIManager.Get().ShowPopup("Open the Shop Window first.", PopupType.Normal);
+                if (GameState.CurrentNetworkMode != GameNetworkMode.Client)
+                {
+                    UIManager.Get().ShowPopup("Open the UPM Shop Window first.", PopupType.Normal);
+                }
+                else
+                {
+                    UIManager.Get().ShowInfoWindow("Open the Used Parts Market Window first.");
+                }
             }
         }
 
@@ -726,6 +816,16 @@ namespace DemoCheats
             }
             LogService.Instance.WriteToLog($"Demo World Limits: {(_demoLimitsActive ? "ON" : "OFF")}");
             UIManager.Get().ShowPopup($"Demo World Limits {(_demoLimitsActive ? "ON" : "OFF")}", PopupType.Normal);
+            if (GameState.CurrentNetworkMode == GameNetworkMode.Host)
+            {
+                LogService.Instance.WriteToLog("User is in a multiplayer session");
+                UIManager.Get().ShowInfoWindow("You are in a multiplayer session.\n\nThis toggles the physical demo barriers for your game and the client.\nThe client still has to toggle the visible demo barriers.");
+            }
+            if (GameState.CurrentNetworkMode == GameNetworkMode.Client)
+            {
+                LogService.Instance.WriteToLog("User is a multiplayer client");
+                UIManager.Get().ShowInfoWindow("You are in a multiplayer session.\n\nThis toggles the visible demo barriers for your game only.\nThe host has to toggle the physical demo barriers for you to bypass them.");
+            }
         }
 
         /// <summary>
@@ -733,14 +833,21 @@ namespace DemoCheats
         /// </summary>
         public static void DeleteCar()
         {
+            if (GameState.CurrentNetworkMode == GameNetworkMode.Client)
+            {
+                LogService.Instance.WriteToLog("User is a multiplayer client");
+                UIManager.Get().ShowInfoWindow("You are in a multiplayer session.\n\nThis feature is disabled for the client.");
+                return;
+            }
+
+            // Get the GameObject being looked at.
+            GameObject goInView = GameScript.Get().GetIOMouseOverGO();
             // Get the car being looked at.
-            CarLoader carInView = GameScript.Get().GetIOMouseOverCarLoader2();
-            // Get the part being looked at.
-            CarPart carPart = GameScript.Get().GetIOMouseOverCarLoader();
-            // If the user is looking at a car and a part, paint the car.
+            CarLoader carInView = GameScript.Get().GetIOMouseOverCarLoader();
+            // If the user is looking at a car and a part, delete the car.
             // The game stores the last car looked at sometimes.
             // If the car is not null but the part is, the user isn't looking at a car.
-            if (carInView != null && carPart != null)
+            if (carInView != null && goInView != null)
             {
                 // This is a developer function and may not work in future updates.
                 var carDebug = carInView.GetComponent<CarDebug>();
@@ -753,5 +860,32 @@ namespace DemoCheats
                 LogService.Instance.WriteToLog("User not looking at a car");
             }
         }
+#if DEBUG
+        /// <summary>
+        /// DEBUG Method to open the car doors, hood and trunk.
+        /// </summary>
+        public static void OpenCar()
+        {
+            // Get the GameObject being looked at.
+            GameObject goInView = GameScript.Get().GetIOMouseOverGO();
+            // Get the car being looked at.
+            CarLoader carInView = GameScript.Get().GetIOMouseOverCarLoader();
+            // If the user is looking at a car and a part, open the car.
+            // The game stores the last car looked at sometimes.
+            // If the car is not null but the part is, the user isn't looking at a car.
+            if (carInView != null && goInView != null)
+            {
+                // This is a developer function and may not work in future updates.
+                var carDebug = carInView.GetComponent<CarDebug>();
+                carDebug.OpenCar();
+            }
+            else
+            {
+                // The user isn't looking at a car.
+                UIManager.Get().ShowPopup("Please look at a car.", PopupType.Normal);
+                LogService.Instance.WriteToLog("User not looking at a car");
+            }
+        }
+#endif
     }
 }

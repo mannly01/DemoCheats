@@ -1,6 +1,6 @@
 ﻿using Il2Cpp;
 using Il2CppCMS.Core;
-using Il2CppCMS.DevTools;
+using Il2CppCMS.DevTools.QC;
 using Il2CppCMS.Items;
 using Il2CppCMS.Player.Containers;
 using Il2CppCMS.UI;
@@ -193,7 +193,7 @@ namespace DemoCheats
                 windowManager.IsWindowActive(WindowID.Warehouse))
             {
                 // Get a reference to the Warehouse Window.
-                var warehouseWindow = windowManager.GetWindowByID<WarehouseWindow25>(WindowID.Warehouse);
+                var warehouseWindow = windowManager.GetWindowByID<WarehouseWindow>(WindowID.Warehouse);
                 if (warehouseWindow != null)
                 {
                     // Get a reference to the Player Inventory Panel.
@@ -439,7 +439,7 @@ namespace DemoCheats
             {
                 if (windowManager.IsWindowActive(WindowID.Shop))
                 {
-                    var shopWindow = windowManager.GetWindowByID<ShopWindow25>(WindowID.Shop);
+                    var shopWindow = windowManager.GetWindowByID<ShopWindow>(WindowID.Shop);
                     if (shopWindow != null)
                     {
                         var partsPage = shopWindow.partsPage;
@@ -462,14 +462,16 @@ namespace DemoCheats
                                             //LogService.Instance.WriteToLog($"Part ID: {slItem.ItemID}");
                                             //LogService.Instance.WriteToLog($"Part Name: {GameInventory.Instance.GetLocalizedName(slItem.ItemID)}");
                                             var gameItem = GameInventory.Instance.GetItemProperty(slItem.ItemID);
-                                            if (partsPage.ShopType == ShopType25.LicensePlates)
+                                            if (partsPage.ShopType == ShopType.LicensePlates)
                                             {
                                                 ShopListLicensePlate slLP = slItem.TryCast<ShopListLicensePlate>();
                                                 if (slLP != null)
                                                 {
                                                     var licenseName = ItemHelper.ParseLicensePlateName(slLP.Name);
-                                                    int price = Helper.GetPrice(TestScript.Method_Internal_Static_IBaseItem_LicensePlate_0(
-                                                    Singleton<GameInventory>.Instance.LicensePlatesProvider.GetRandomLicensePlate()));
+                                                    int price = Helper.GetPrice(
+                                                        InventoryCommands.Method_Internal_Static_IBaseItem_LicensePlate_0(
+                                                            Singleton<GameInventory>.Instance.licensePlatesProvider.GetRandomLicensePlate()));
+                                                    
 #if DEBUG
                                                     LogService.Instance.WriteToLog($"Parsed Part Name: {licenseName}");
                                                     LogService.Instance.WriteToLog($"License Plate Price: ${price}");
@@ -484,7 +486,7 @@ namespace DemoCheats
                                                     shopCartManager.AddToCart(new IShopCartItem(scLP.Pointer));
                                                 }
                                             }
-                                            else if (partsPage.ShopType == ShopType25.Wheels)
+                                            else if (partsPage.ShopType == ShopType.Wheels)
                                             {
                                                 ShopListRim slR = slItem.TryCast<ShopListRim>();
                                                 if (slR != null)
