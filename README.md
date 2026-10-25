@@ -6,7 +6,7 @@ A collection of cheats for the Car Mechanic Simulator 2027 Demo.
 
 ## UPDATE - 2.1.1
 * Fixed Bug: Holding 'ACCEPT' while the Shopping List is open was still working.
-* Fixed Bug: When disabling the Demo World Limits, the vehicle detector for the test track was accidently toggled off.
+* Fixed Bug: When disabling the Demo World Limits, the vehicle detector for the test track was accidentally toggled off.
 * Fixed Bug: The BuildInfo for the mod had the 2026 values which are invalid.
 * **Some functions are only available to the Host in multiplayer.**
 
