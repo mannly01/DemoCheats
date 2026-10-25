@@ -6,11 +6,13 @@ using Il2CppCMS.Player.Containers;
 using Il2CppCMS.UI;
 using Il2CppCMS.UI.Helpers;
 using Il2CppCMS.UI.Logic;
+using Il2CppCMS.UI.Logic.CarInfo.Containers;
 using Il2CppCMS.UI.Logic.Shop.Cart.Containers;
 using Il2CppCMS.UI.Logic.Shop.List_.Containers;
 using Il2CppCMS.UI.Windows;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace DemoCheats
 {
@@ -259,7 +261,7 @@ namespace DemoCheats
                     var wareCapacity = wareItemsManager.InventoryCapacity;
                     // If the user has Unlimited Inventory turned on,
                     // the UI will show a limit, but it will allow more items to be moved.
-                    if (_configFile.UnlimitedInventory)
+                    if (InventoryCommands.UnlimitedInventory)
                     {
                         wareCapacity = 10000;
                     }
@@ -339,7 +341,7 @@ namespace DemoCheats
 #if DEBUG
                                 LogService.Instance.WriteToLog($"MinNumOfItemsWarning ({_configFile.MinNumOfItemsWarning}) threshold reached");
 #endif
-                                uiManager.ShowAskWindow("Move Items", $"You are moving {invItemsCount} items which is greater than the MinNumOfItemsWarning setting.\nAre you sure?", confirmMove);
+                                uiManager.ShowAskWindow("Move Items", $"You are moving {invItemsCount} items which is greater than the MinNumOfItemsWarning ({_configFile.MinNumOfItemsWarning}) setting.\nAre you sure?", confirmMove);
                             }
                             else
                             {
@@ -403,7 +405,7 @@ namespace DemoCheats
 #if DEBUG
                                 LogService.Instance.WriteToLog($"MinNumOfItemsWarning ({_configFile.MinNumOfItemsWarning}) threshold reached");
 #endif
-                                uiManager.ShowAskWindow("Move Items", $"You are moving {wareItemsCount} items which is greater than the MinNumOfItemsWarning setting.\nAre you sure?", confirmMove);
+                                uiManager.ShowAskWindow("Move Items", $"You are moving {wareItemsCount} items which is greater than the MinNumOfItemsWarning ({_configFile.MinNumOfItemsWarning}) setting.\nAre you sure?", confirmMove);
                             }
                             else
                             {
@@ -554,6 +556,145 @@ namespace DemoCheats
                     LogService.Instance.WriteToLog($"Active Window: {activeWindows.head.Value}");
                 } 
 #endif
+            }
+
+            yield return null;
+        }
+
+        public static void MoveAllItemsToShoppingCart()
+        {
+            var windowManager = WindowManager.Instance;
+            if (windowManager == null)
+                return;
+            if (windowManager.activeWindows.count > 0)
+            {
+                if (windowManager.IsWindowActive(WindowID.CarInfo))
+                {
+                    var carInfoWindow = windowManager.GetWindowByID<CarInfoWindow>(WindowID.CarInfo);
+                    if (carInfoWindow != null)
+                    {
+                        var currentCarInfoPage = carInfoWindow.currentTab;
+#if DEBUG
+                        LogService.Instance.WriteToLog($"Current CarInfo Page: {currentCarInfoPage}");
+#endif
+
+                        var partsTab = carInfoWindow.partsTab;
+                        if (partsTab.isActiveAndEnabled)
+                        {
+                            var partsCategory = partsTab.currentCategory;
+                            var partsSorting = partsTab.currentSortType;
+                            var partsManager = partsTab.pageManager;
+#if DEBUG
+                            LogService.Instance.WriteToLog($"Category: {partsCategory}, Sorting: {partsSorting}, ItemCount: {partsManager.GetItemsCount()}, Page Item Count: {partsManager.CurrentPageItemsCount}");
+#endif
+
+                            var partItemObjects = partsManager.ItemObjects;
+                            if (partItemObjects != null)
+                            {
+                                ushort currentPage = 0;
+                                while (currentPage < partsManager.PagesCount)
+                                {
+#if DEBUG
+                                    MelonLogger.Msg($"Current Page: {partsManager.currentPage}");
+#endif
+                                    foreach (var partItemObject in partItemObjects)
+                                    {
+                                        if (partItemObject.CanAddToShopList())
+                                        {
+                                            partItemObject.AddToShopList();
+                                        }
+#if DEBUG
+                                        else
+                                        {
+                                            LogService.Instance.WriteToLog($"{partItemObject.name} couldn't be added to shopping list");
+                                        }
+#endif
+                                    }
+                                    currentPage++;
+                                    if (partsManager.CanGoToNextPage())
+                                    {
+                                        partsManager.NextPage();
+                                    }
+                                    else
+                                    {
+                                        partsManager.SetPage(0);
+                                    }
+                                }
+                            }
+#if DEBUG
+                            else
+                            {
+                                LogService.Instance.WriteToLog("ItemObject array is null");
+                            }
+#endif
+                        }
+                    }
+                }
+            }
+        }
+        public static System.Collections.IEnumerator MarkAllCarParts()
+        {
+            var windowManager = WindowManager.Instance;
+            if (windowManager == null)
+                yield return null;
+            if (windowManager.activeWindows.count > 0)
+            {
+                if (windowManager.IsWindowActive(WindowID.CarInfo))
+                {
+                    var carInfoWindow = windowManager.GetWindowByID<CarInfoWindow>(WindowID.CarInfo);
+                    if (carInfoWindow != null)
+                    {
+                        var currentCarInfoPage = carInfoWindow.currentTab;
+#if DEBUG
+                        LogService.Instance.WriteToLog($"Current CarInfo Page: {currentCarInfoPage}");
+#endif
+
+                        var partsTab = carInfoWindow.partsTab;
+                        if (partsTab.isActiveAndEnabled)
+                        {
+                            var partsCategory = partsTab.currentCategory;
+                            var partsSorting = partsTab.currentSortType;
+                            var partsManager = partsTab.pageManager;
+#if DEBUG
+                            LogService.Instance.WriteToLog($"Category: {partsCategory}, Sorting: {partsSorting}, ItemCount: {partsManager.GetItemsCount()}, Page Item Count: {partsManager.CurrentPageItemsCount}");
+#endif
+
+                            var partItems = partsManager.Items.Cast<Il2CppSystem.Collections.Generic.List<CarInfoPart>>();
+                            if (partItems != null)
+                            {
+                                SoundManager.Get().PlaySFX("MarkPart");
+                                var uiVolume = SoundManager.Get().uiSoundsAudioSource.volume;
+                                LogService.Instance.WriteToLog($"UI Volume Before: {SoundManager.Get().uiSoundsAudioSource.volume}");
+                                SoundManager.Get().uiSoundsAudioSource.volume = 0;
+                                LogService.Instance.WriteToLog($"UI Volume After: {SoundManager.Get().uiSoundsAudioSource.volume}");
+                                foreach (var partItem in partItems)
+                                {
+                                    if (partItem.CanBeMarked && !partItem.IsMarked)
+                                    {
+                                        partItem.MarkAction.Invoke(true);
+                                    }
+#if DEBUG
+                                    else
+                                    {
+                                        LogService.Instance.WriteToLog($"{partItem.Name} couldn't be marked");
+                                    }
+#endif
+                                }
+                                partsManager.RefreshParts(partsCategory, partsSorting, null);
+                                yield return new WaitForSeconds(1.0f);
+                                yield return new WaitForFixedUpdate();
+                                yield return new WaitForEndOfFrame();
+                                SoundManager.Get().uiSoundsAudioSource.volume = uiVolume;
+                            }
+#if DEBUG
+                            else
+                            {
+                                LogService.Instance.WriteToLog("Cast to list failed");
+                            } 
+#endif
+                        }
+                    }
+                }
             }
 
             yield return null;

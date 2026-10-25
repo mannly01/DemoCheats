@@ -1,6 +1,7 @@
 ﻿using Il2Cpp;
 using Il2CppCMS.Core;
 using Il2CppCMS.Core.Car;
+using Il2CppCMS.Core.Car.Body;
 using Il2CppCMS.DevTools;
 using Il2CppCMS.DevTools.QC;
 using Il2CppCMS.Player.Controller;
@@ -29,6 +30,9 @@ namespace DemoCheats
         private static int _currentColorIndex = -1;
         private static CarLoader _currentCar;
 
+        /// <summary>
+        /// Car IDs for the available cars.
+        /// </summary>
         private static readonly List<string> _spawnCarIDs = new List<string>()
         {
             "car_boltnevada",
@@ -39,6 +43,9 @@ namespace DemoCheats
             "car_mayenm5",
             "car_salemariesmk3"
         };
+        /// <summary>
+        /// English names for the available cars.
+        /// </summary>
         private static readonly List<string> _spawnCarNames = new List<string>()
         {
             "Bolt Nevada",
@@ -49,6 +56,9 @@ namespace DemoCheats
             "Mayen M5",
             "Salem Aries MK3"
         };
+        /// <summary>
+        /// The valid config versions for the available cars.
+        /// </summary>
         private static readonly List<List<int>> _spawnCarConfigs = new List<List<int>>()
         {
             new List<int>() { 0, 3, 4 },
@@ -64,7 +74,7 @@ namespace DemoCheats
         /// <summary>
         /// Variable to store whether the user want to see just DNB Censor parts.
         /// </summary>
-        private static bool _onlyDNBParts = false;
+        private static bool _onlyUnavailableParts = true;
 
         /// <summary>
         /// References to the demo world limit game objects.
@@ -91,16 +101,6 @@ namespace DemoCheats
             sharedGameDataManager.AddMoneyInternal(_configFile.MoneyAmount);
             LogService.Instance.WriteToLog($"Added ${_configFile.MoneyAmount:C}");
             UIManager.Get().ShowPopup($"Added ${_configFile.MoneyAmount:C}.", PopupType.Normal);
-#if DEBUG
-            // TODO: Implement Inventory Resizing
-            //LogService.Instance.WriteToLog($"Inv Size Multi: {sharedGameDataManager.inventorySizeMultiplier}");
-            //sharedGameDataManager.inventorySizeMultiplier = 5;
-            //LogService.Instance.WriteToLog($"New Inv Size Multi: {sharedGameDataManager.inventorySizeMultiplier}");
-            // TODO: Implement XP Multiplication
-            //LogService.Instance.WriteToLog($"Xp Multi: {sharedGameDataManager.xpMultiplier}");
-            //sharedGameDataManager.xpMultiplier = 5;
-            //LogService.Instance.WriteToLog($"New Xp Multi: {sharedGameDataManager.xpMultiplier}");
-#endif
         }
 
         /// <summary>
@@ -242,7 +242,7 @@ namespace DemoCheats
         {
             DevSettings.FastMountMode = !DevSettings.FastMountMode;
             _configFile.FastMount = DevSettings.FastMountMode;
-            LogService.Instance.WriteToLog($"Fast Mounting: {_configFile.FastMount}");
+            LogService.Instance.WriteToLog($"Fast Mounting: {DevSettings.FastMountMode}");
             UIManager.Get().ShowPopup($"Fast Mounting: {DevSettings.FastMountMode}.", PopupType.Normal);
         }
 
@@ -381,18 +381,35 @@ namespace DemoCheats
                             wheels.rearLeftWheel.GetComponent<PartScript>().SetColor(currentColor.Color);
                             wheels.rearRightWheel.GetComponent<PartScript>().SetColor(currentColor.Color);
                         }
-                        //else if (carPart.name.Contains("headlight"))
-                        //{
-                        //    LogService.Instance.WriteToLog("Looking at headlight");
-                        //}
-                        //else if (carPart.name.Contains("taillight"))
-                        //{
-                        //    LogService.Instance.WriteToLog("Looking at taillight");
-                        //}
-                        //else if (carPart.name.Contains("window"))
-                        //{
-                        //    LogService.Instance.WriteToLog("Looking at window");
-                        //}
+                        else if (goInView.name.Contains("headlight") ||
+                                 goInView.name.Contains("taillight"))
+                        {
+                            LogService.Instance.WriteToLog("Looking at headlight or taillight");
+                            var meshRender = goInView.GetComponent<MeshRenderer>();
+                            if (meshRender != null)
+                            {
+                                var materials = meshRender.materials;
+                                foreach (var material in materials)
+                                {
+                                    if (material.name.Contains("glass"))
+                                    {
+                                        material.color = new Color(0.0f, 0.0f, 0.0f, 0.825f);
+                                    }
+                                } 
+                            }
+                            _currentColorIndex--;
+                        }
+                        else if (goInView.name.Contains("window"))
+                        {
+                            LogService.Instance.WriteToLog("Looking at window");
+                            var bodyPart = goInView.GetComponent<CarBodyPart>();
+                            if (bodyPart != null)
+                            {
+                                bodyPart.TintColor = new Color32(0, 0, 0, 225);
+                                bodyPart.IsTinted = true;
+                            }
+                            _currentColorIndex--;
+                        }
                         else
                         {
                             // This extension replaces looping through all the parts and painting them.
@@ -441,7 +458,7 @@ namespace DemoCheats
         /// <summary>
         /// Repairs all the body parts (including frame and interior) to 100%.
         /// </summary>
-        public static void RepairCar()
+        public static void RepairBodyParts()
         {
             if (GameState.CurrentNetworkMode == GameNetworkMode.Client)
             {
@@ -471,7 +488,7 @@ namespace DemoCheats
         }
 
         /// <summary>
-        /// Cycles through the 5 available cars for the user to spawn.
+        /// Cycles through the 7 available cars for the user to spawn.
         /// </summary>
         public static void CycleSpawnCar()
         {
@@ -605,6 +622,9 @@ namespace DemoCheats
                             }
                             if (!string.IsNullOrWhiteSpace(carLoader.CarID))
                             {
+                                carLoader.ShowNewCarWaitingPopup = true;
+                                SoundManager.Get().PlaySFX("TutorialBing");
+
                                 UIManager.Get().ShowPopup($"Car {spawnedCars + 1} of 10 spawned.", PopupType.Normal);
                                 nextIndex++;
                             }
@@ -645,7 +665,7 @@ namespace DemoCheats
                     //LogService.Instance.WriteToLog("Shop Window Active");
                     //var currentShopType = shopWindow.currentShopType;
                     //LogService.Instance.WriteToLog($"Current ShopType: {currentShopType}");
-                    //if (currentShopType == ShopType25.UsedParts)
+                    //if (currentShopType == ShopType.UsedParts)
                     //{
                     //    LogService.Instance.WriteToLog($"Used Parts Page Active");
                     //}
@@ -673,7 +693,7 @@ namespace DemoCheats
             {
                 if (GameState.CurrentNetworkMode != GameNetworkMode.Client)
                 {
-                    UIManager.Get().ShowPopup("Open the UPM Shop Window first.", PopupType.Normal); 
+                    UIManager.Get().ShowPopup("Open the Used Parts Market Window first.", PopupType.Normal); 
                 }
                 else
                 {
@@ -683,7 +703,7 @@ namespace DemoCheats
         }
 
         /// <summary>
-        /// Toggles off any car parts that aren't the DNB Censor and then
+        /// Toggles off any car parts that aren't the Current Spawn Car and then
         /// refreshes the Used Parts Market parts list and updates the parts page.
         /// </summary>
         public static void ToggleUPM()
@@ -701,7 +721,7 @@ namespace DemoCheats
                     var usedPartsManager = shopWindow.usedPartsShopManager;
                     if (usedPartsManager != null)
                     {
-                        if (_onlyDNBParts)
+                        if (!_onlyUnavailableParts)
                         {
                             usedPartsManager.InitializeItemsPool();
                         }
@@ -714,9 +734,13 @@ namespace DemoCheats
                                 for (int i = 0; i < items.Count; i++)
                                 {
                                     var item = items[i];
-                                    if (item != null && item.ItemId != null && item.ItemId.ToLower().Contains("dnb"))
+                                    if (item != null && item.ItemId != null)
                                     {
-                                        itemsToKeep.Add(item);
+                                        var spawnCar = _spawnCarIDs[_currentSpawnIndex];
+                                        if (item.ItemId.Contains(spawnCar))
+                                        {
+                                            itemsToKeep.Add(item);
+                                        }
                                     }
                                 }
 
@@ -756,9 +780,9 @@ namespace DemoCheats
                             }
                         }
                         usedPartsManager.GenerateParts();
-                        _onlyDNBParts = !_onlyDNBParts;
-                        LogService.Instance.WriteToLog("Toggled Used Parts Market");
-                        UIManager.Get().ShowPopup($"Toggled Used Parts Market {(_onlyDNBParts ? "ON" : "OFF")}.", PopupType.Normal);
+                        LogService.Instance.WriteToLog($"Toggled Unavailable Parts {(_onlyUnavailableParts ? "ON" : "OFF")}");
+                        UIManager.Get().ShowPopup($"Toggled Unavailable Parts {(_onlyUnavailableParts ? "ON" : "OFF")}.", PopupType.Normal);
+                        _onlyUnavailableParts = !_onlyUnavailableParts;
                     }
                     var partsPage = shopWindow.partsPage;
                     if (partsPage != null && partsPage.ShopType == ShopType.UsedParts)
@@ -779,7 +803,7 @@ namespace DemoCheats
             {
                 if (GameState.CurrentNetworkMode != GameNetworkMode.Client)
                 {
-                    UIManager.Get().ShowPopup("Open the UPM Shop Window first.", PopupType.Normal);
+                    UIManager.Get().ShowPopup("Open the Used Parts Market Window first.", PopupType.Normal);
                 }
                 else
                 {

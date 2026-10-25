@@ -121,7 +121,7 @@ namespace DemoCheats
             }, new DebugCommandAdditionalData { doNotCloseMenu = GameState.CurrentNetworkMode != GameNetworkMode.Client }));
             commandList.Add(new DebugCommand("repaircar", "Repair the car's body parts.", "Repair Body Parts", () =>
             {
-                Helpers.RepairCar();
+                Helpers.RepairBodyParts();
             }));
             commandList.Add(new DebugCommand("cyclenewcar", "Cycle through the available cars to spawn.", "Cycle Spawn Cars", () =>
             {
@@ -136,7 +136,7 @@ namespace DemoCheats
             {
                 Helpers.RefreshUPM();
             }, new DebugCommandAdditionalData { doNotCloseMenu = GameState.CurrentNetworkMode != GameNetworkMode.Client }));
-            commandList.Add(new DebugCommand("toggleupm", "Toggle non-DNB Censor parts in the UPM.", "Toggle DNB Parts", () =>
+            commandList.Add(new DebugCommand("toggleupm", "Filter Used Parts Market by the selected Spawn Car.", "Toggle Filter", () =>
             {
                 Helpers.ToggleUPM();
             }, new DebugCommandAdditionalData { doNotCloseMenu = GameState.CurrentNetworkMode != GameNetworkMode.Client }));
@@ -206,7 +206,7 @@ namespace DemoCheats
             toolTipStyle = new GUIStyle(GUI.skin.label);
             toolTipStyle.fontSize = 14 * drawDoubleSizeFor4K;
             toolTipStyle.fontStyle = FontStyle.Bold;
-            GUI.Label(new Rect(menuX + menuPadding, menuY - 50, menuWidth, 40), GUI.tooltip, toolTipStyle);
+            GUI.Label(new Rect(menuX + menuPadding, menuY - (25 * drawDoubleSizeFor4K), menuWidth, 40), GUI.tooltip, toolTipStyle);
 
             string warning = string.Join(nl,
                 "WARNING!  These are CHEATS!",
