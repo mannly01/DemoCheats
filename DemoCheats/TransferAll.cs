@@ -594,9 +594,6 @@ namespace DemoCheats
                                 ushort currentPage = 0;
                                 while (currentPage < partsManager.PagesCount)
                                 {
-#if DEBUG
-                                    MelonLogger.Msg($"Current Page: {partsManager.currentPage}");
-#endif
                                     foreach (var partItemObject in partItemObjects)
                                     {
                                         if (partItemObject.CanAddToShopList())

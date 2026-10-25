@@ -4,13 +4,10 @@ A collection of cheats for the Car Mechanic Simulator 2027 Demo.
 ## REQUIREMENTS
 * [MelonLoader 0.7.3](https://github.com/LavaGang/MelonLoader/releases/tag/v0.7.3)
 
-## UPDATE - 2.1.0
-* Unlocked TransferAll functions for multiplayer.
-* Changed the Toggle DNB Censor parts in UPM to filter body parts for selected Spawn car in UPM.
-* Added the ability to use the TransferAll Key to add all car parts to the Shopping List.
-* Added the ability to use the TransferAll Key to mark all car parts.
-* Moved the ability to move all items from the Shopping List to Cart to the TransferAll Key.
-* Fixed Bug: If the user was a multiplayer client the GameSpeed and FastMount settings weren't applied on start.
+## UPDATE - 2.1.1
+* Fixed Bug: Holding 'ACCEPT' while the Shopping List is open was still working.
+* Fixed Bug: When disabling the Demo World Limits, the vehicle detector for the test track was accidently toggled off.
+* Fixed Bug: The BuildInfo for the mod had the 2026 values which are invalid.
 * **Some functions are only available to the Host in multiplayer.**
 
 ## FEATURES

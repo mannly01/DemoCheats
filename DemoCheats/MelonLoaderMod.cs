@@ -14,7 +14,6 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 namespace DemoCheats
@@ -26,15 +25,15 @@ namespace DemoCheats
 #else
         public const string Name = "Demo Cheats";
 #endif
-        public const string Description = "A collection of cheats for the Car Mechanic Simulator 2026 Demo.";
-        public const string Author = "mannly82";
+        public const string Description = "A collection of cheats for the Car Mechanic Simulator 2027 Demo.";
+        public const string Author = "mannly01";
         public const string Company = "The Mann Design";
 #if DEBUG
         public const string Version = "2.1.99";
 #else
-        public const string Version = "2.1.0";
+        public const string Version = "2.1.1";
 #endif
-        public const string DownloadLink = "https://www.nexusmods.com/carmechanicsimulator2026/mods/6";
+        public const string DownloadLink = "https://www.nexusmods.com/carmechanicsimulator2027/mods/6";
         public const string MelonGameCompany = "Red Dot Games";
         public const string MelonGameName = "Car Mechanic Simulator 2027 Demo";
     }
@@ -315,11 +314,13 @@ namespace DemoCheats
         /// </summary>
         public static string GetCurrentScene() => _currentScene;
         private static string _currentScene = string.Empty;
-
+        
+        // Saved for reference
         // These are the mapped keys for accept and exit/close.
-        private InputAction _enterAction;
-        private InputAction _enterHoldAction;
-        private InputAction _exitAction;
+        // https://docs.unity3d.com/Packages/com.unity.inputsystem@1.19/manual/ActionBindings.html#working-with-bindings
+        //private InputAction _enterAction;
+        //private InputAction _enterHoldAction;
+        //private InputAction _exitAction;
 
         // This holds a tick value we can test
         // to see if the user holds down the TransferAll key.
@@ -335,18 +336,20 @@ namespace DemoCheats
             _configFile = new DemoCheatsConfigFile();
         }
 
-        private void GetBoundKeys()
-        {
-            var asset = Resources.FindObjectsOfTypeAll<InputActionAsset>()[0];
-            _enterAction = asset.FindAction("UI Common/Accept", false);
-            _enterHoldAction = asset.FindAction("UI Common/Accept Hold", false);
-            _exitAction = asset.FindAction("UI Common/Cancel", false);
-#if DEBUG
-            LogService.Instance.WriteToLog($"Enter Action: {_enterAction.GetBindingDisplayString()}");
-            LogService.Instance.WriteToLog($"Enter Hold Action: {_enterHoldAction.GetBindingDisplayString()}");
-            LogService.Instance.WriteToLog($"Exit Action: {_exitAction.GetBindingDisplayString()}");
-#endif
-        }
+        // Saved for reference
+//        private void GetBoundKeys()
+//        {
+//            var asset = Resources.FindObjectsOfTypeAll<InputActionAsset>()[0];
+//            _enterAction = asset.FindAction("UI Common/Accept", false);
+//            _enterHoldAction = asset.FindAction("UI Common/Accept Hold", false);
+//            _exitAction = asset.FindAction("UI Common/Cancel", false);
+//#if DEBUG
+//            LogService.Instance.WriteToLog($"Enter Action: {_enterAction.GetBindingDisplayString()}");
+//            LogService.Instance.WriteToLog($"Enter Hold Action: {_enterHoldAction.GetBindingDisplayString()}");
+//            LogService.Instance.WriteToLog($"Exit Action: {_exitAction.GetBindingDisplayString()}");
+//#endif
+//        }
+
         public override void OnSceneWasInitialized(int buildIndex, string sceneName)
         {
             if (buildIndex == -1)
@@ -372,7 +375,7 @@ namespace DemoCheats
 #endif
             if (_currentScene.Equals("garage"))
             {
-                var targets = new List<string>() { "DemoWalls", "Garage_Exterior_Demo_Collider", "Garage_Exterior_Demo_Wall_Blocked_1", "DemoVehiclesDetector" };
+                var targets = new List<string>() { "DemoWalls", "Garage_Exterior_Demo_Collider", "Garage_Exterior_Demo_Wall_Blocked_1" };
                 foreach (var name in targets)
                 {
                     GameObject target = Resources.FindObjectsOfTypeAll<GameObject>().FirstOrDefault(go => go.name == name);
@@ -392,9 +395,6 @@ namespace DemoCheats
                             case "Garage_Exterior_Demo_Wall_Blocked_1":
                                 Helpers.Garage_Exterior_Demo_Wall_Blocked_1GO = target;
                                 break;
-                            case "DemoVehiclesDetector":
-                                Helpers.DemoVehiclesDetectorGO = target;
-                                break;
                         }
                     }
 #if DEBUG
@@ -404,7 +404,8 @@ namespace DemoCheats
                     }
 #endif
                 }
-                GetBoundKeys();
+                // Saved for reference
+                //GetBoundKeys();
                 
                 // Saved for reference
 //                // Get the Network Runner and populate networking references.
@@ -532,20 +533,21 @@ namespace DemoCheats
         public override void OnUpdate()
         {
 #if DEBUG
-            if (_enterAction != null)
-            {
-                if (_enterAction.WasReleasedThisFrame())
-                {
-                    LogService.Instance.WriteToLog($"{_enterAction.GetBindingDisplayString().Split('|')[0].Trim()} was released");
-                }
-            }
-            if (_exitAction != null)
-            {
-                if (_exitAction.WasReleasedThisFrame())
-                {
-                    LogService.Instance.WriteToLog($"{_exitAction.GetBindingDisplayString().Split('|')[0].Trim()} was released");
-                } 
-            }
+            // Saved for reference
+            //if (_enterAction != null)
+            //{
+            //    if (_enterAction.WasReleasedThisFrame())
+            //    {
+            //        LogService.Instance.WriteToLog($"{_enterAction.GetBindingDisplayString().Split('|')[0].Trim()} was released");
+            //    }
+            //}
+            //if (_exitAction != null)
+            //{
+            //    if (_exitAction.WasReleasedThisFrame())
+            //    {
+            //        LogService.Instance.WriteToLog($"{_exitAction.GetBindingDisplayString().Split('|')[0].Trim()} was released");
+            //    } 
+            //}
 
             if (Input.GetKeyUp(KeyCode.J))
             {
@@ -672,7 +674,7 @@ namespace DemoCheats
             {
                 if (_currentScene.Equals("garage"))
                 {
-                    if (Il2CppCMS.Core.GameMode.Get().currentMode == gameMode.CarDrive)
+                    if (GameMode.Get().currentMode == gameMode.CarDrive)
                     {
                         UIManager.Get().ShowPopup("Please exit the vehicle first.", PopupType.Normal);
                         LogService.Instance.WriteToLog("Player is inside a vehicle.");
@@ -768,16 +770,6 @@ namespace DemoCheats
             {
                 if (!CheckIfInputIsFocused())
                 {
-                    //if (GameState.CurrentNetworkMode == GameNetworkMode.SinglePlayer)
-                    //{
-                        
-                    //}
-                    //else
-                    //{
-                    //    LogService.Instance.WriteToLog("User is in a multiplayer session");
-                    //    UIManager.Get().ShowInfoWindow("You are in a multiplayer session.\n\nThis feature is disabled until more testing is complete.");
-                    //    return;
-                    //}
                     _configFile.SetPartConditionLowerBy10();
                     // The standard Popup doesn't show over the UI,
                     // so show an Info Window if a UIWindow is displayed.
@@ -805,16 +797,6 @@ namespace DemoCheats
             {
                 if (!CheckIfInputIsFocused())
                 {
-                    //if (GameState.CurrentNetworkMode == GameNetworkMode.SinglePlayer)
-                    //{
-                        
-                    //}
-                    //else
-                    //{
-                    //    LogService.Instance.WriteToLog("User is in a multiplayer session");
-                    //    UIManager.Get().ShowInfoWindow("You are in a multiplayer session.\n\nThis feature is disabled until more testing is complete.");
-                    //    return;
-                    //}
                     _configFile.SetPartConditionHigherBy10();
                     // The standard Popup doesn't show over the UI,
                     // so show an Info Window if a UIWindow is displayed.
@@ -924,19 +906,6 @@ namespace DemoCheats
                 }
 #endif
                 _transferAllHoldTimer = 0;
-            }
-            // https://docs.unity3d.com/Packages/com.unity.inputsystem@1.19/manual/ActionBindings.html#working-with-bindings
-            if (_enterHoldAction != null)
-            {
-                if (_enterHoldAction.WasPerformedThisFrame())
-                {
-#if DEBUG
-                    LogService.Instance.WriteToLog($"{_enterHoldAction.GetBindingDisplayString().Split('|')[0].Trim()} was performed");
-#endif
-
-                    // Move all items in the Shopping List to the Cart.
-                    MelonCoroutines.Start(TransferAll.MoveShoppingListToCart());
-                }
             }
             #endregion
         }

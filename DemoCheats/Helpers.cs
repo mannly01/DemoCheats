@@ -83,7 +83,6 @@ namespace DemoCheats
         public static GameObject DemoWallsGO = null;
         public static GameObject Garage_Exterior_Demo_ColliderGO = null;
         public static GameObject Garage_Exterior_Demo_Wall_Blocked_1GO = null;
-        public static GameObject DemoVehiclesDetectorGO = null;
 
         /// <summary>
         /// Adds the amount of money from the config file to the player.
@@ -832,11 +831,6 @@ namespace DemoCheats
             {
                 Garage_Exterior_Demo_Wall_Blocked_1GO.SetActive(_demoLimitsActive);
                 LogService.Instance.WriteToLog($"Garage_Exterior_Demo_Wall_Blocked_1: {(Garage_Exterior_Demo_Wall_Blocked_1GO.activeSelf ? "ON" : "OFF")}");
-            }
-            if (DemoVehiclesDetectorGO != null)
-            {
-                DemoVehiclesDetectorGO.SetActive(_demoLimitsActive);
-                LogService.Instance.WriteToLog($"DemoVehiclesDetector: {(DemoVehiclesDetectorGO.activeSelf ? "ON" : "OFF")}");
             }
             LogService.Instance.WriteToLog($"Demo World Limits: {(_demoLimitsActive ? "ON" : "OFF")}");
             UIManager.Get().ShowPopup($"Demo World Limits {(_demoLimitsActive ? "ON" : "OFF")}", PopupType.Normal);
