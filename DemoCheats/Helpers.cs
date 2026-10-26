@@ -621,10 +621,14 @@ namespace DemoCheats
                             }
                             if (!string.IsNullOrWhiteSpace(carLoader.CarID))
                             {
+                                UIManager.Get().ShowPopup($"Car {spawnedCars + 1} of 10 spawned.", PopupType.Normal);
+
                                 carLoader.ShowNewCarWaitingPopup = true;
                                 SoundManager.Get().PlaySFX("TutorialBing");
+                                Il2CppCMS.UI.Markers.MapMarkersManager markersManager = Il2CppCMS.SceneLoaders.GarageLoader.Get().MapMarkersManager;
+                                markersManager.RefreshMarkers();
+                                carLoader.PinMarker(true);
 
-                                UIManager.Get().ShowPopup($"Car {spawnedCars + 1} of 10 spawned.", PopupType.Normal);
                                 nextIndex++;
                             }
                             // This was wrong.

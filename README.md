@@ -4,10 +4,9 @@ A collection of cheats for the Car Mechanic Simulator 2027 Demo.
 ## REQUIREMENTS
 * [MelonLoader 0.7.3](https://github.com/LavaGang/MelonLoader/releases/tag/v0.7.3)
 
-## UPDATE - 2.1.1
-* Fixed Bug: Holding 'ACCEPT' while the Shopping List is open was still working.
-* Fixed Bug: When disabling the Demo World Limits, the vehicle detector for the test track was accidentally toggled off.
-* Fixed Bug: The BuildInfo for the mod had the 2026 values which are invalid.
+## UPDATE - 2.1.2
+* Added Marker to spawned car to show its location.
+* Bug Fix: When using the move all items from Shopping List function, all the items on the 2nd to last page were added twice.
 * **Some functions are only available to the Host in multiplayer.**
 
 ## FEATURES

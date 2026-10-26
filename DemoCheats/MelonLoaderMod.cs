@@ -31,7 +31,7 @@ namespace DemoCheats
 #if DEBUG
         public const string Version = "2.1.99";
 #else
-        public const string Version = "2.1.1";
+        public const string Version = "2.1.2";
 #endif
         public const string DownloadLink = "https://www.nexusmods.com/carmechanicsimulator2027/mods/6";
         public const string MelonGameCompany = "Red Dot Games";

@@ -585,45 +585,62 @@ namespace DemoCheats
                             var partsSorting = partsTab.currentSortType;
                             var partsManager = partsTab.pageManager;
 #if DEBUG
-                            LogService.Instance.WriteToLog($"Category: {partsCategory}, Sorting: {partsSorting}, ItemCount: {partsManager.GetItemsCount()}, Page Item Count: {partsManager.CurrentPageItemsCount}");
+                            LogService.Instance.WriteToLog($"Category: {partsCategory}, Sorting: {partsSorting}, ItemCount: {partsManager.GetItemsCount()}");
 #endif
-
-                            var partItemObjects = partsManager.ItemObjects;
-                            if (partItemObjects != null)
+                            for (uint i = 0; i < partsManager.pagesCount; i++)
                             {
-                                ushort currentPage = 0;
-                                while (currentPage < partsManager.PagesCount)
+                                if (i > 0)
                                 {
-                                    foreach (var partItemObject in partItemObjects)
-                                    {
-                                        if (partItemObject.CanAddToShopList())
-                                        {
-                                            partItemObject.AddToShopList();
-                                        }
+                                    partsManager.SetPage(i);
+                                }
+                                var partItemObjects = partsManager.ItemObjects;
 #if DEBUG
-                                        else
-                                        {
-                                            LogService.Instance.WriteToLog($"{partItemObject.name} couldn't be added to shopping list");
-                                        }
+                                LogService.Instance.WriteToLog($"Page {partsManager.currentPage}, Page Item Count: {partsManager.ItemObjects.Count}"); 
 #endif
-                                    }
-                                    currentPage++;
-                                    if (partsManager.CanGoToNextPage())
+                                if (partItemObjects != null)
+                                {
+                                    if (partsManager.CurrentPageIsLast())
                                     {
-                                        partsManager.NextPage();
+                                        for (int j = 0; j < partsManager.currentPageItemsCount; j++)
+                                        {
+                                            var partItemObject = partItemObjects[j];
+                                            if (partItemObject.CanAddToShopList())
+                                            {
+                                                partItemObject.AddToShopList();
+                                            }
+#if DEBUG
+                                            else
+                                            {
+                                                LogService.Instance.WriteToLog($"{partItemObject.name} couldn't be added to shopping list");
+                                            }
+#endif
+                                        }
                                     }
                                     else
                                     {
-                                        partsManager.SetPage(0);
-                                    }
-                                }
-                            }
+                                        foreach (var partItemObject in partItemObjects)
+                                        {
+                                            if (partItemObject.CanAddToShopList())
+                                            {
+                                                partItemObject.AddToShopList();
+                                            }
 #if DEBUG
-                            else
-                            {
-                                LogService.Instance.WriteToLog("ItemObject array is null");
-                            }
+                                            else
+                                            {
+                                                LogService.Instance.WriteToLog($"{partItemObject.name} couldn't be added to shopping list");
+                                            }
 #endif
+                                        }
+                                    } 
+                                }
+#if DEBUG
+                                else
+                                {
+                                    LogService.Instance.WriteToLog("ItemObject array is null");
+                                }
+#endif
+                            }
+                            partsManager.SetPage(0);
                         }
                     }
                 }
