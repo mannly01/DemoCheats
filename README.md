@@ -4,15 +4,17 @@ A collection of cheats for the Car Mechanic Simulator 2027 Demo.
 ## REQUIREMENTS
 * [MelonLoader 0.7.3](https://github.com/LavaGang/MelonLoader/releases/tag/v0.7.3)
 
-## UPDATE - 2.1.2
-* Added Marker to spawned car to show its location.
-* Bug Fix: When using the move all items from Shopping List function, all the items on the 2nd to last page were added twice.
+## UPDATE - 2.1.3
+* Fixed Bug: The window and light tint were not persisting after the game exited.
+* Fixed Bug: The Max Skills cheat wasn't working if the user upgraded a skill manually first.
+* Fixed Bug: RepairBody key was constantly being checked in OnUpdate.
+* Added multiple comments to source files and adjusted log file output.
 * **Some functions are only available to the Host in multiplayer.**
 
 ## FEATURES
 * Add a configured amount of money and XP to the player.
 * Add skill points to the player.
-* Max out the skills of the player. **(this is permanent without saving)**
+* Max out the skills of the player. **(this now requires saving)**
 * Toggle fast mounting of parts.
 * Set the Inventory to unlimited for the Player and Warehouses (Warehouse UI will show 200 limit still). **(HOST SETS FOR BOTH)**
 * Change the Game Speed.

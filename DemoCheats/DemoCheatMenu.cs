@@ -10,14 +10,23 @@ namespace DemoCheats
 {
     public class DemoCheatMenu
     {
+        // List of commands that are assigned to buttons.
         public static List<object> commandList;
+        // Stores the visibility of the Demo Cheats Menu.
         public static bool cheatMenuShown = false;
+        // Stores whether the Help Tooltip is shown.
         public static bool showHelp = false;
+        // Stores whether the Demo Cheat Menu has been initialized.
         private static bool isInitialized = false;
 
+        // Reference to a NewLine character.
         private static readonly string nl = System.Environment.NewLine;
+        // Stores the Display Scaling value.
         private static int drawDoubleSizeFor4K = 1; // for 4K display, this is 2
 
+        /// <summary>
+        /// A Coroutine that runs the first time the Demo Cheats Menu is displayed.
+        /// </summary>
         public static System.Collections.IEnumerator ToggleConsoleFirstTimeDisplay()
         {
             yield return new WaitForEndOfFrame();
@@ -25,17 +34,24 @@ namespace DemoCheats
             yield break;
         }
 
+        /// <summary>
+        /// Toggles the Demo Cheat Menu ON/OFF.
+        /// </summary>
         public static void ToggleCheatMenu()
         {
+            // Checks whether the Menu is currently displayed.
             if (!cheatMenuShown)
             {
+                // The Menu was not displayed, so it is now.
                 cheatMenuShown = true;
+                // If this is the first time, initialize the Menu.
                 if (!isInitialized)
                 {
                     cheatMenuShown = false;
-                    ShowCheatMenu();
+                    CreateCheatMenuCommands();
                     MelonCoroutines.Start(ToggleConsoleFirstTimeDisplay());
                 }
+                // Set the GameMode to UI so the view locks and shows the cursor.
                 if (GameMode.Get().currentMode != gameMode.UI)
                 {
                     GameMode.Get().SetCurrentMode(gameMode.UI);
@@ -43,27 +59,37 @@ namespace DemoCheats
             }
             else
             {
+                // The Menu was displayed, so now it is not.
                 cheatMenuShown = false;
+                // Sets the GameMode based on if a window is open.
                 if (GameMode.Get().currentMode == gameMode.UI &&
                     Singleton<WindowManager>.Instance.activeWindows.Count > 0)
                 {
+                    // Another window is open, so keep the GameMode in UI Mode.
                     GameMode.Get().SetCurrentMode(gameMode.UI);
                 }
                 else
                 {
+                    // There are no other windows open, so stop the UI Mode.
                     GameMode.Get().SetCurrentMode(gameMode.Garage);
                 }
             }
         }
 
-        public static void ShowCheatMenu()
+        /// <summary>
+        /// Method to create the Demo Cheats Menu commands.
+        /// </summary>
+        public static void CreateCheatMenuCommands()
         {
+            // Checks if the user is playing in 4K and sets the scale to 2x.
             drawDoubleSizeFor4K = 1;
             if (GameSettings.VideoSettingsData.ScreenResolutionX >= 2560)
             {
                 drawDoubleSizeFor4K = 2;
             }
 
+            // Creates the list of commands that are assigned to buttons on the Menu.
+            // doNotCloseMenu = true will stop the Menu from closing after the button is pressed.
             commandList = new List<object>();
             commandList.Add(new DebugCommand("togglemenu", "Hide this Cheat Menu.", "X", () => { }));
             commandList.Add(new DebugCommand("addmoney", "Add Money to Player.", "Money+", () =>
@@ -151,14 +177,18 @@ namespace DemoCheats
 
             isInitialized = true;
         }
-
+        /// <summary>
+        /// Method to draw the Demo Cheats Menu.
+        /// </summary>
         public static void DrawCheatMenu()
         {
+            // If the Menu is toggled off, do not draw the Menu.
             if (!cheatMenuShown)
             {
                 return;
             }
             
+            // If the user is using a controller, inform them this won't work.
             if (GameSettings.ConsoleMode)
             {
                 string message = string.Join(nl,
@@ -171,26 +201,28 @@ namespace DemoCheats
                 return;
             }
 
+            // Create the sizing and position for the Menu.
             int menuWidth = 380 * drawDoubleSizeFor4K;
             int menuHeight = 495 * drawDoubleSizeFor4K;
             int menuX = Screen.width - (menuWidth + 30);
             int menuY = Screen.height - (menuHeight + 30);
             int menuPadding = 15 * drawDoubleSizeFor4K;
 
-            GUIStyle labelStyle, sliderStyle, sliderStyleThumb, toggleStyle, textStyle, buttoniStyle, toolTipStyle, boxStyle;
+            // Create the styles for the UI elements of the Menu.
+            GUIStyle labelStyle, /*sliderStyle, sliderStyleThumb, toggleStyle,*/ textStyle, buttoniStyle, toolTipStyle, boxStyle;
             labelStyle = new GUIStyle(GUI.skin.label);
             labelStyle.fontSize = 14 * drawDoubleSizeFor4K;
             labelStyle.fontStyle = FontStyle.Bold;
             labelStyle.alignment = TextAnchor.MiddleCenter;
 
-            sliderStyle = new GUIStyle(GUI.skin.horizontalSlider);
-            sliderStyle.fixedHeight = 12 * drawDoubleSizeFor4K;      //default 12
-            sliderStyleThumb = new GUIStyle(GUI.skin.horizontalSliderThumb);
-            sliderStyleThumb.fixedWidth = 12 * drawDoubleSizeFor4K;
-            sliderStyleThumb.fixedHeight = 12 * drawDoubleSizeFor4K;
+            //sliderStyle = new GUIStyle(GUI.skin.horizontalSlider);
+            //sliderStyle.fixedHeight = 12 * drawDoubleSizeFor4K;      //default 12
+            //sliderStyleThumb = new GUIStyle(GUI.skin.horizontalSliderThumb);
+            //sliderStyleThumb.fixedWidth = 12 * drawDoubleSizeFor4K;
+            //sliderStyleThumb.fixedHeight = 12 * drawDoubleSizeFor4K;
 
-            toggleStyle = new GUIStyle(GUI.skin.toggle);
-            toggleStyle.fontSize = 11 * drawDoubleSizeFor4K;
+            //toggleStyle = new GUIStyle(GUI.skin.toggle);
+            //toggleStyle.fontSize = 11 * drawDoubleSizeFor4K;
 
             textStyle = new GUIStyle(GUI.skin.textField);
             textStyle.fontSize = 14 * drawDoubleSizeFor4K;
@@ -202,12 +234,14 @@ namespace DemoCheats
             };
             int buttonWidth = 160 * drawDoubleSizeFor4K;
             int buttonHeight = 30 * drawDoubleSizeFor4K;
-
+            
+            // Create the style and label for the Help ToolTip.
             toolTipStyle = new GUIStyle(GUI.skin.label);
             toolTipStyle.fontSize = 14 * drawDoubleSizeFor4K;
             toolTipStyle.fontStyle = FontStyle.Bold;
             GUI.Label(new Rect(menuX + menuPadding, menuY - (25 * drawDoubleSizeFor4K), menuWidth, 40), GUI.tooltip, toolTipStyle);
 
+            // Create the style and box for the warning message.
             string warning = string.Join(nl,
                 "WARNING!  These are CHEATS!",
                 "Please save your game before using them.");

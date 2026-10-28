@@ -1,13 +1,17 @@
 ﻿using Il2Cpp;
 using Il2CppCMS.Core;
+using Il2CppCMS.Core.Car;
 using Il2CppCMS.DevTools.QC;
+using Il2CppCMS.Garage;
+using Il2CppCMS.Garage.Interfaces;
+using Il2CppCMS.Managers;
 using Il2CppCMS.Player.Controller;
 using Il2CppCMS.Scenes.Loader;
 using Il2CppCMS.UI;
 using Il2CppCMS.UI.Logic;
 using Il2CppCMS.UI.Windows;
+using Il2CppSystem;
 using MelonLoader;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -31,7 +35,7 @@ namespace DemoCheats
 #if DEBUG
         public const string Version = "2.1.99";
 #else
-        public const string Version = "2.1.2";
+        public const string Version = "2.1.3";
 #endif
         public const string DownloadLink = "https://www.nexusmods.com/carmechanicsimulator2027/mods/6";
         public const string MelonGameCompany = "Red Dot Games";
@@ -154,12 +158,12 @@ namespace DemoCheats
         /// User setting for the key to transfer the Inventory/Warehouse/Junk items.
         /// </summary>
         public KeyCode TransferAllItems => _transferAllItems.Value;
-        public readonly MelonPreferences_Entry<KeyCode> _transferAllItems;
+        private readonly MelonPreferences_Entry<KeyCode> _transferAllItems;
         /// <summary>
         /// User setting for the key to set the condition of parts percentage lower by 10%.
         /// </summary>
         public KeyCode SetPartConditionLower => _setPartConditionLower.Value;
-        public readonly MelonPreferences_Entry<KeyCode> _setPartConditionLower;
+        private readonly MelonPreferences_Entry<KeyCode> _setPartConditionLower;
         /// <summary>
         /// Method to change the MinPartCondition setting lower by 10%.
         /// </summary>
@@ -178,7 +182,7 @@ namespace DemoCheats
         /// User setting for the key to set the condition of parts percentage higher by 10%.
         /// </summary>
         public KeyCode SetPartConditionHigher => _setPartConditionHigher.Value;
-        public readonly MelonPreferences_Entry<KeyCode> _setPartConditionHigher;
+        private readonly MelonPreferences_Entry<KeyCode> _setPartConditionHigher;
         /// <summary>
         /// Method to change the MinPartCondition setting higher by 10%.
         /// </summary>
@@ -201,12 +205,12 @@ namespace DemoCheats
             get => _minPartCondition.Value;
             set { _minPartCondition.Value = value; }
         }
-        public readonly MelonPreferences_Entry<int> _minPartCondition;
+        private readonly MelonPreferences_Entry<int> _minPartCondition;
         /// <summary>
         /// User setting for the minimum number of items to show a warning message before transfer.
         /// </summary>
         public int MinNumOfItemsWarning => _minNumOfItemsWarning.Value;
-        public readonly MelonPreferences_Entry<int> _minNumOfItemsWarning;
+        private readonly MelonPreferences_Entry<int> _minNumOfItemsWarning;
         #endregion
 
         /// <summary>
@@ -268,14 +272,14 @@ namespace DemoCheats
                     _settings.SaveToFile();
                 }
             }
-            catch (Exception ex)
+            catch (System.Exception ex)
             {
                 LogService.Instance.WriteToLog($"Unable to ensure config path: {ex.Message}", "ConfigFile.Init");
             }
 
 #if DEBUG
             // Logging for debug purposes.
-            LogService.Instance.WriteToLog($"AddMoney: {OpenCheatMenu}", "ConfigFile.Init");
+            LogService.Instance.WriteToLog($"Open Cheat Menu: {OpenCheatMenu}", "ConfigFile.Init");
             LogService.Instance.WriteToLog($"Paint Car: {PaintCar}", "ConfigFile.Init");
             LogService.Instance.WriteToLog($"Repair Body: {RepairBody}", "ConfigFile.Init");
             LogService.Instance.WriteToLog($"MoneyAmount: {MoneyAmount}", "ConfigFile.Init");
@@ -314,13 +318,23 @@ namespace DemoCheats
         /// </summary>
         public static string GetCurrentScene() => _currentScene;
         private static string _currentScene = string.Empty;
-        
+
         // Saved for reference
         // These are the mapped keys for accept and exit/close.
         // https://docs.unity3d.com/Packages/com.unity.inputsystem@1.19/manual/ActionBindings.html#working-with-bindings
         //private InputAction _enterAction;
         //private InputAction _enterHoldAction;
         //private InputAction _exitAction;
+
+#if DEBUG
+        // References to the 3 Lifters.
+        private CarLifter _carLifterOne;
+        private LifterState _carLifterOnePrevState = LifterState.Floor;
+        private CarLifter _carLifterTwo;
+        private LifterState _carLifterTwoPrevState = LifterState.Floor;
+        private CarLifter _carLifterThree;
+        private LifterState _carLifterThreePrevState = LifterState.Floor;
+#endif
 
         // This holds a tick value we can test
         // to see if the user holds down the TransferAll key.
@@ -337,18 +351,104 @@ namespace DemoCheats
         }
 
         // Saved for reference
-//        private void GetBoundKeys()
-//        {
-//            var asset = Resources.FindObjectsOfTypeAll<InputActionAsset>()[0];
-//            _enterAction = asset.FindAction("UI Common/Accept", false);
-//            _enterHoldAction = asset.FindAction("UI Common/Accept Hold", false);
-//            _exitAction = asset.FindAction("UI Common/Cancel", false);
-//#if DEBUG
-//            LogService.Instance.WriteToLog($"Enter Action: {_enterAction.GetBindingDisplayString()}");
-//            LogService.Instance.WriteToLog($"Enter Hold Action: {_enterHoldAction.GetBindingDisplayString()}");
-//            LogService.Instance.WriteToLog($"Exit Action: {_exitAction.GetBindingDisplayString()}");
-//#endif
-//        }
+        //        private void GetBoundKeys()
+        //        {
+        //            var asset = Resources.FindObjectsOfTypeAll<InputActionAsset>()[0];
+        //            _enterAction = asset.FindAction("UI Common/Accept", false);
+        //            _enterHoldAction = asset.FindAction("UI Common/Accept Hold", false);
+        //            _exitAction = asset.FindAction("UI Common/Cancel", false);
+        //#if DEBUG
+        //            LogService.Instance.WriteToLog($"Enter Action: {_enterAction.GetBindingDisplayString()}");
+        //            LogService.Instance.WriteToLog($"Enter Hold Action: {_enterHoldAction.GetBindingDisplayString()}");
+        //            LogService.Instance.WriteToLog($"Exit Action: {_exitAction.GetBindingDisplayString()}");
+        //#endif
+        //        }
+
+#if DEBUG
+        private void GetCarLifters()
+        {
+            var liftManagerGO = Resources.FindObjectsOfTypeAll<GameObject>().FirstOrDefault(go => go.name == "LifterManager");
+            if (liftManagerGO != null)
+            {
+                var lifterManager = liftManagerGO.GetComponent<LifterManager>();
+                if (lifterManager != null)
+                {
+                    var lifters = lifterManager.spawnedLifters;
+                    if (lifters != null)
+                    {
+                        if (lifters.Count > 0)
+                        {
+                            foreach (var lifter in lifters)
+                            {
+                                //var lifterTransform = lifter.transform;
+                                //if (lifterTransform != null)
+                                //{
+                                //    if (lifterTransform.position.x == 0)
+                                //    {
+                                //        _carLifterOne = lifter;
+                                //    }
+                                //    else if (lifterTransform.position.x < 0 && lifterTransform.position.x > -10)
+                                //    {
+                                //        _carLifterTwo = lifter;
+                                //    }
+                                //    else if (lifterTransform.position.x < -10)
+                                //    {
+                                //        _carLifterThree = lifter;
+                                //    }
+
+                                //}
+                                //else
+                                //{
+                                //    LogService.Instance.WriteToLog("Lifter Transform null");
+                                //}
+                                if (lifter.CarPlace == CarPlace.CarLifter1)
+                                {
+                                    _carLifterOne = lifter;
+#if DEBUG
+                                    LogService.Instance.WriteToLog("Lifter One Found");
+#endif
+                                }
+                                else if (lifter.CarPlace == CarPlace.CarLifter2)
+                                {
+                                    _carLifterTwo = lifter;
+#if DEBUG
+                                    LogService.Instance.WriteToLog("Lifter Two Found");
+#endif
+                                }
+                                else if (lifter.CarPlace == CarPlace.CarLifter3)
+                                {
+                                    _carLifterThree = lifter;
+#if DEBUG
+                                    LogService.Instance.WriteToLog("Lifter Three Found");
+#endif
+                                }
+                                else
+                                {
+                                    LogService.Instance.WriteToLog("Lifter CarPlace is null");
+                                }
+                            }
+                        }
+                        else
+                        {
+                            LogService.Instance.WriteToLog("0 Lifters found");
+                        }
+                    }
+                    else
+                    {
+                        LogService.Instance.WriteToLog("Lifters List null");
+                    }
+                }
+                else
+                {
+                    LogService.Instance.WriteToLog("Lifter Manager null");
+                }
+            }
+            else
+            {
+                LogService.Instance.WriteToLog("Lifter Manager GO null");
+            }
+        } 
+#endif
 
         public override void OnSceneWasInitialized(int buildIndex, string sceneName)
         {
@@ -375,15 +475,19 @@ namespace DemoCheats
 #endif
             if (_currentScene.Equals("garage"))
             {
+                // Create a list with the three GameObjects for the Demo Walls.
                 var targets = new List<string>() { "DemoWalls", "Garage_Exterior_Demo_Collider", "Garage_Exterior_Demo_Wall_Blocked_1" };
+                // Loop through the list and save a reference to the GameObjects.
                 foreach (var name in targets)
                 {
+                    // Search for the GameObject to toggle.
                     GameObject target = Resources.FindObjectsOfTypeAll<GameObject>().FirstOrDefault(go => go.name == name);
                     if (target != null)
                     {
 #if DEBUG
                         LogService.Instance.WriteToLog($"Found GameObject {GetGameObjectPath(target)}");
 #endif
+                        // Save a reference to the GameObjects in the Helpers class.
                         switch (name)
                         {
                             case "DemoWalls":
@@ -406,10 +510,11 @@ namespace DemoCheats
                 }
                 // Saved for reference
                 //GetBoundKeys();
-                
+
                 // Saved for reference
+                // Replaced with GameState.CurrentNetworkMode
 //                // Get the Network Runner and populate networking references.
-//                var networkRunners = NetworkRunner.Instances.TryCast<Il2CppSystem.Collections.Generic.List<NetworkRunner>>();
+//                var networkRunners = NetworkRunner.Instances.TryCast<Il2CppList<NetworkRunner>>();
 //                if (networkRunners != null)
 //                {
 //                    foreach (var networkRunner in networkRunners)
@@ -437,24 +542,32 @@ namespace DemoCheats
                 LogService.Instance.WriteToLog($"GameState: {GameState.CurrentNetworkMode}");
 #endif
 
+                // The persistent settings need to be applied after the scene loads,
+                // so this IEnumerator starts with waiting on the scene to finish.
                 System.Collections.IEnumerator WaitForSceneLoad()
                 {
+                    // Wait for the scene to finish loading.
                     yield return new WaitForSeconds(1f);
                     while (SceneLoader.Instance.IsLoadingScene)
                         yield return new WaitForSeconds(0.5f);
 
+                    // Some setting can't be applied on the client-side of a MP session.
                     if (GameState.CurrentNetworkMode != GameNetworkMode.Client)
                     {
+                        // Find all the PlayerControllers in the game (should be 1-2)
                         var playerControllerGOs =
                                         Resources.FindObjectsOfTypeAll<GameObject>().Where(go => go.name.Contains("Player Controller ("));
                         if (playerControllerGOs.Any())
                         {
+                            // Loop through the PlayerControllers and set the persistent settings.
                             foreach (var playerControllerGO in playerControllerGOs)
                             {
+                                // Get a reference to the PlayerMovement component of the PlayerController.
                                 PlayerMovement playerMovement = playerControllerGO.GetComponent<PlayerMovement>();
 #if DEBUG
                                 LogService.Instance.WriteToLog($"{playerControllerGO.name} WalkSpeed Before: {playerMovement.settings.MaxWalkingSpeed}");
 #endif
+                                // If the persistent walk speed is not the default, update the walk speed.
                                 if (playerMovement.settings.MaxWalkingSpeed != _configFile.WalkSpeed)
                                 {
                                     playerMovement.settings.MaxWalkingSpeed = _configFile.WalkSpeed;
@@ -465,6 +578,7 @@ namespace DemoCheats
 #if DEBUG
                                 LogService.Instance.WriteToLog($"{playerControllerGO.name} RunSpeed Before: {playerMovement.settings.MaxRunningSpeed}");
 #endif
+                                // If the persistent run speed is not the default, update the run speed.
                                 if (playerMovement.settings.MaxRunningSpeed != _configFile.RunSpeed)
                                 {
                                     playerMovement.settings.MaxRunningSpeed = _configFile.RunSpeed;
@@ -482,29 +596,34 @@ namespace DemoCheats
 #if DEBUG
                         LogService.Instance.WriteToLog($"Unlimited Inventory Before: {InventoryCommands.UnlimitedInventory}");
 #endif
+                        // If the persistent unlimited inventory setting is not the default, update it.
                         if (InventoryCommands.UnlimitedInventory != _configFile.UnlimitedInventory)
                         {
                             InventoryCommands.UnlimitedInventory = _configFile.UnlimitedInventory;
 #if DEBUG
                             LogService.Instance.WriteToLog($"Unlimited Inventory After: {InventoryCommands.UnlimitedInventory}");
 #endif
-                        } 
+                        }
+
+                        Helpers.TintAllVehicleParts();
                     }
 
 #if DEBUG
-                    LogService.Instance.WriteToLog($"GameSpeed Before: {Time.timeScale}"); 
+                    LogService.Instance.WriteToLog($"GameSpeed Before: {Time.timeScale}");
 #endif
+                    // If the persistent game speed is not the default, update the game speed.
                     if (Time.timeScale != _configFile.GameSpeed)
                     {
                         Time.timeScale = _configFile.GameSpeed;
 #if DEBUG
-                        LogService.Instance.WriteToLog($"GameSpeed After: {Time.timeScale}"); 
+                        LogService.Instance.WriteToLog($"GameSpeed After: {Time.timeScale}");
 #endif
                     }
-                        
+
 #if DEBUG
                     LogService.Instance.WriteToLog($"FastMount Before: {DevSettings.FastMountMode}");
 #endif
+                    // If the persistent fast mount setting is not the default, update it.
                     if (DevSettings.FastMountMode != _configFile.FastMount)
                     {
                         DevSettings.FastMountMode = _configFile.FastMount;
@@ -513,8 +632,14 @@ namespace DemoCheats
 #endif
                     }
 
+#if DEBUG
+                    // Get the Garage Car Lifters for later use.
+                    GetCarLifters(); 
+#endif
+
                     yield return null;
                 }
+                // This runs the IEnumerator above.
                 MelonCoroutines.Start(WaitForSceneLoad());
             }
         }
@@ -530,8 +655,92 @@ namespace DemoCheats
             }
         }
 
+#if DEBUG
+        private void MoveCarLifter(int CarLifterIndex = 1)
+        {
+            CarLifter carLifter;
+            LifterState carLifterState;
+            switch (CarLifterIndex)
+            {
+                case 2:
+                    carLifter = _carLifterTwo;
+                    carLifterState = _carLifterTwoPrevState;
+                    break;
+                case 3:
+                    carLifter = _carLifterThree;
+                    carLifterState = _carLifterThreePrevState;
+                    break;
+                default:
+                    carLifter = _carLifterOne;
+                    carLifterState = _carLifterOnePrevState;
+                    break;
+            }
+            if (carLifter != null)
+            {
+                if (!carLifter.IsMoving)
+                {
+                    if (carLifter.ConnectedCar != null)
+                    {
+                        switch (carLifter.CurrentState)
+                        {
+                            case LifterState.Floor:
+                                carLifter.UseButton(LifterButton.Up);
+                                carLifterState = LifterState.Floor;
+                                break;
+                            case LifterState.Middle:
+                                if (carLifterState == LifterState.Floor)
+                                {
+                                    carLifter.UseButton(LifterButton.Up);
+                                }
+                                else
+                                {
+                                    carLifter.UseButton(LifterButton.Down);
+                                }
+                                carLifterState = LifterState.Middle;
+                                break;
+                            case LifterState.Top:
+                                carLifter.UseButton(LifterButton.Down);
+                                carLifterState = LifterState.Top;
+                                break;
+                            default:
+                                break;
+                        }
+                        switch (CarLifterIndex)
+                        {
+                            case 2:
+                                _carLifterTwoPrevState = carLifterState;
+                                break;
+                            case 3:
+                                _carLifterThreePrevState = carLifterState;
+                                break;
+                            default:
+                                _carLifterOnePrevState = carLifterState;
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        LogService.Instance.WriteToLog($"Carlifter {CarLifterIndex} has no connected car");
+                    }
+                }
+                else
+                {
+                    LogService.Instance.WriteToLog($"Carlifter {CarLifterIndex} is moving");
+                }
+            }
+            else
+            {
+                LogService.Instance.WriteToLog($"Carlifter {CarLifterIndex} is null");
+            }
+        } 
+#endif
+
         public override void OnUpdate()
         {
+            // If the Config File was not initialized, fail
+            if (_configFile == null)
+                return;
+
 #if DEBUG
             // Saved for reference
             //if (_enterAction != null)
@@ -539,6 +748,13 @@ namespace DemoCheats
             //    if (_enterAction.WasReleasedThisFrame())
             //    {
             //        LogService.Instance.WriteToLog($"{_enterAction.GetBindingDisplayString().Split('|')[0].Trim()} was released");
+            //    }
+            //}
+            //if (_enterHoldAction != null)
+            //{
+            //    if (_enterHoldAction.WasPerformedThisFrame())
+            //    {
+            //        LogService.Instance.WriteToLog($"{_enterHoldAction.GetBindingDisplayString().Split('|')[0].Trim()} was long pressed");
             //    }
             //}
             //if (_exitAction != null)
@@ -549,87 +765,35 @@ namespace DemoCheats
             //    } 
             //}
 
+            if (Input.GetKeyUp(KeyCode.B))
+            {
+                // Lifter 1
+                MoveCarLifter(1);
+            }
+            if (Input.GetKeyUp(KeyCode.N))
+            {
+                // Lifter 2
+                MoveCarLifter(2);
+            }
+            if (Input.GetKeyUp(KeyCode.M))
+            {
+                // Lifter 3
+                MoveCarLifter(3);
+            }
+
             if (Input.GetKeyUp(KeyCode.J))
             {
                 if (!CheckIfInputIsFocused())
                 {
                     LogService.Instance.WriteToLog("Debug Key (J) Pressed");
-                    
+
                     //ShowSceneName();
                     //ShowWindowName();
                     //ShowActiveShopWindowType();
                     //ShowActiveCarMenu();
+                    //ShowCarLoaderBeingLookedAt();
 
                     //Helpers.OpenCar();
-
-                    //var gameManager = GameManager.Instance;
-                    //if (gameManager == null)
-                    //    return;
-                    //var inputManager = gameManager.inputManager;
-                    //if (inputManager != null)
-                    //{
-                    //    // This is only enabled when the user is driving a car.
-                    //    // Might come in handy later.
-                    //    // GameMode.Get().currentMode == gameMode.CarDrive is another way to tell.
-                    //    //LogService.Instance.WriteToLog($"IsCarEnabled: {inputManager.IsCarEnabled()}");
-                    //}
-                    //LogService.Instance.WriteToLog($"Game Mode: {GameMode.Get().currentMode}");
-
-                    // Get the GameObject being looked at.
-                    //GameObject goInView = GameScript.Get().GetIOMouseOverGO();
-                    //// Get the car being looked at.
-                    //CarLoader carInView = GameScript.Get().GetIOMouseOverCarLoader();
-                    //// If the user is looking at a car and a part, log values.
-                    //// The game stores the last car looked at sometimes.
-                    //// If the car is not null but the part is, the user isn't looking at a car.
-                    //if (carInView != null && goInView != null)
-                    //{
-                    //    LogService.Instance.WriteToLog($"GameObject: {goInView.name}");
-                    //    LogService.Instance.WriteToLog($"Car Loader: {carInView.name}");
-                    //}
-
-                    // If the user upgrades a skill, the UnlockAllSkills() cheat doesn't work.
-                    //var skillUpgrades = Resources.FindObjectsOfTypeAll<SkillUpgradeItem>();
-                    //LogService.Instance.WriteToLog($"Skill Count: {skillUpgrades.Count}");
-                    //AdditionalRequirement additionalRequirement;
-                    //foreach (var skillUpgrade in skillUpgrades)
-                    //{
-                    //    switch (skillUpgrade.AssignedSkillID)
-                    //    {
-                    //        case "fast_mount":
-                    //            LogService.Instance.WriteToLog("-- Fast Mount --");
-                    //            LogService.Instance.WriteToLog($"Fast Mount can unlock: {skillUpgrade.canUnlock}");
-                    //            additionalRequirement = skillUpgrade.additionalRequirement;
-                    //            LogService.Instance.WriteToLog($"Additional Requirement: {additionalRequirement.requirementText.text}");
-                    //            LogService.Instance.WriteToLog($"Requirement Fullfilled: {additionalRequirement.isFulfilled}");
-                    //            LogService.Instance.WriteToLog($"Current Value: {additionalRequirement.currentValue}");
-                    //            LogService.Instance.WriteToLog($"Required Value: {additionalRequirement.requiredValue}");
-                    //            LogService.Instance.WriteToLog("-- Fast Mount --");
-                    //            break;
-                    //        case "fast_partremove":
-                    //            LogService.Instance.WriteToLog("-- Fast Part Remove --");
-                    //            LogService.Instance.WriteToLog($"Fast Part Remove can unlock: {skillUpgrade.canUnlock}");
-                    //            additionalRequirement = skillUpgrade.additionalRequirement;
-                    //            LogService.Instance.WriteToLog($"Additional Requirement: {additionalRequirement.requirementText.text}");
-                    //            LogService.Instance.WriteToLog($"Requirement Fullfilled: {additionalRequirement.isFulfilled}");
-                    //            LogService.Instance.WriteToLog($"Current Value: {additionalRequirement.currentValue}");
-                    //            LogService.Instance.WriteToLog($"Required Value: {additionalRequirement.requiredValue}");
-                    //            LogService.Instance.WriteToLog("-- Fast Part Remove --");
-                    //            break;
-                    //        case "inventory_capacity":
-                    //            LogService.Instance.WriteToLog("-- Inventory Capacity --");
-                    //            LogService.Instance.WriteToLog($"Inventory Capacity can unlock: {skillUpgrade.canUnlock}");
-                    //            additionalRequirement = skillUpgrade.additionalRequirement;
-                    //            LogService.Instance.WriteToLog($"Additional Requirement: {additionalRequirement.requirementText.text}");
-                    //            LogService.Instance.WriteToLog($"Requirement Fullfilled: {additionalRequirement.isFulfilled}");
-                    //            LogService.Instance.WriteToLog($"Current Value: {additionalRequirement.currentValue}");
-                    //            LogService.Instance.WriteToLog($"Required Value: {additionalRequirement.requiredValue}");
-                    //            LogService.Instance.WriteToLog("-- Inventory Capacity --");
-                    //            break;
-                    //        default:
-                    //            break;
-                    //    }
-                    //}
 
                     // This adds coffee to the player.
                     // They can buy the coffee machine to do this too.
@@ -668,65 +832,77 @@ namespace DemoCheats
                 }
             }
 #endif
-            if (_configFile == null) return;
-
-            if (Input.GetKeyDown(_configFile.OpenCheatMenu))
+            // The OpenCheatMenu key has been pressed.
+            if (Input.GetKeyUp(_configFile.OpenCheatMenu))
             {
-                if (_currentScene.Equals("garage"))
+                // Check if the user is currently using the Search box.
+                if (!CheckIfInputIsFocused())
                 {
-                    if (GameMode.Get().currentMode == gameMode.CarDrive)
+                    // Check that the user is in the Garage.
+                    if (_currentScene.Equals("garage"))
                     {
-                        UIManager.Get().ShowPopup("Please exit the vehicle first.", PopupType.Normal);
-                        LogService.Instance.WriteToLog("Player is inside a vehicle.");
-                        return;
-                    }
-                    var windowManager = WindowManager.Instance;
-                    if (windowManager == null)
-                        return;
-
-                    if (windowManager.activeWindows.count > 0)
-                    {
-                        if (windowManager.IsWindowActive(WindowID.Shop))
+                        // Check if the user is inside a car.
+                        if (GameMode.Get().currentMode == gameMode.CarDrive)
                         {
-                            var shopWindow = windowManager.GetWindowByID<ShopWindow>(WindowID.Shop);
-                            if (shopWindow != null)
+                            UIManager.Get().ShowPopup("Please exit the vehicle first.", PopupType.Normal);
+                            LogService.Instance.WriteToLog("Player is inside a vehicle.");
+                            return;
+                        }
+                        var windowManager = WindowManager.Instance;
+                        if (windowManager == null)
+                            return;
+
+                        // Check if a window is open and only open the menu if it's the UPM.
+                        if (windowManager.activeWindows.count > 0)
+                        {
+                            // Check if the Shop window is open.
+                            if (windowManager.IsWindowActive(WindowID.Shop))
                             {
-                                var partsPage = shopWindow.partsPage;
-                                if (partsPage != null && partsPage.ShopType == ShopType.UsedParts)
+                                // Get a reference to the Shop window.
+                                var shopWindow = windowManager.GetWindowByID<ShopWindow>(WindowID.Shop);
+                                if (shopWindow != null)
                                 {
-                                    if (!CheckIfInputIsFocused())
+                                    // Get a reference to the Parts Shop page.
+                                    var partsPage = shopWindow.partsPage;
+                                    // Check that the open Parts Shop is the Used Parts Market.
+                                    if (partsPage != null && partsPage.ShopType == ShopType.UsedParts)
                                     {
+                                        // Show the Demo Cheats Menu.
                                         DemoCheatMenu.ToggleCheatMenu();
                                     }
                                 }
                             }
-                        }
 #if DEBUG
+                            else
+                            {
+                                var activeWindows = windowManager.activeWindows;
+                                LogService.Instance.WriteToLog($"Active Window: {activeWindows.head.Value}");
+                            }
+#endif
+                        }
                         else
                         {
-                            var activeWindows = windowManager.activeWindows;
-                            LogService.Instance.WriteToLog($"Active Window: {activeWindows.head.Value}");
+                            // Show the Demo Cheats Menu.
+                            DemoCheatMenu.ToggleCheatMenu();
                         }
-#endif
-                    }
-                    else
-                    {
-                        DemoCheatMenu.ToggleCheatMenu();
                     } 
                 }
             }
 
-            if (Input.GetKeyDown(_configFile.PaintCar) &&
+            // This is a configurable key in Settings to Cycle the Paint Color of a car.
+            if (Input.GetKeyUp(_configFile.PaintCar) &&
                 _configFile.PaintCar != KeyCode.None)
             {
                 // Check that the user is not a client in a multiplayer session.
                 if (GameState.CurrentNetworkMode != GameNetworkMode.Client)
                 {
+                    // Check that the user is in the Garage.
                     if (_currentScene.Equals("garage"))
                     {
-                        // Check that the user isn't typing in an InputField.
+                        // Check if the user is currently using the Search box.
                         if (!CheckIfInputIsFocused())
                         {
+                            // Cycle Paint Colors,
                             Helpers.CyclePaintColors();
                         }
                     }
@@ -738,18 +914,20 @@ namespace DemoCheats
                     return;
                 }
             }
-
-            if (Input.GetKey(_configFile.RepairBody) &&
+            // This is a configurable key in Settings to Repair the Body Parts of a car.
+            if (Input.GetKeyUp(_configFile.RepairBody) &&
                 _configFile.RepairBody != KeyCode.None)
             {
                 // Check that the user is not a client in a multiplayer session.
                 if (GameState.CurrentNetworkMode != GameNetworkMode.Client)
                 {
+                    // Check that the user is in the Garage.
                     if (_currentScene.Equals("garage"))
                     {
-                        // Check that the user isn't typing in an InputField.
+                        // Check if the user is currently using the Search box.
                         if (!CheckIfInputIsFocused())
                         {
+                            // Repair the Body Parts.
                             Helpers.RepairBodyParts();
                         }
                     }
@@ -768,6 +946,7 @@ namespace DemoCheats
             // and then show the user the current value.
             if (Input.GetKeyUp(_configFile.SetPartConditionLower))
             {
+                // Check if the user is currently using the Seach box.
                 if (!CheckIfInputIsFocused())
                 {
                     _configFile.SetPartConditionLowerBy10();
@@ -795,6 +974,7 @@ namespace DemoCheats
             // and then show the user the current value.
             if (Input.GetKeyUp(_configFile.SetPartConditionHigher))
             {
+                // Check if the user is currently using the Seach box.
                 if (!CheckIfInputIsFocused())
                 {
                     _configFile.SetPartConditionHigherBy10();
@@ -972,10 +1152,29 @@ namespace DemoCheats
                 }
             }
         }
+        private void ShowCarLoaderBeingLookedAt()
+        {
+            // Get the GameObject being looked at.
+            GameObject goInView = GameScript.Get().GetIOMouseOverGO();
+            // Get the car being looked at.
+            CarLoader carInView = GameScript.Get().GetIOMouseOverCarLoader();
+            // If the user is looking at a car and a part, log values.
+            // The game stores the last car looked at sometimes.
+            // If the car is not null but the part is, the user isn't looking at a car.
+            if (carInView != null && goInView != null)
+            {
+                LogService.Instance.WriteToLog($"GameObject: {goInView.name}");
+                LogService.Instance.WriteToLog($"Car Loader: {carInView.name}");
+            }
+        }
 #endif
 
+        /// <summary>
+        /// Built-in method to draw the GUI.
+        /// </summary>
         public override void OnGUI()
         {
+            // Draw the Demo Cheats Menu.
             DemoCheatMenu.DrawCheatMenu();
         }
 
@@ -1037,7 +1236,7 @@ namespace DemoCheats
     public class LogService
     {
         // Thread-safe lazy singleton.
-        private static readonly Lazy<LogService> _lazyInstance = new Lazy<LogService>(() => new LogService());
+        private static readonly System.Lazy<LogService> _lazyInstance = new System.Lazy<LogService>(() => new LogService());
         public static LogService Instance => _lazyInstance.Value;
 
         // The path to the log file.
@@ -1070,7 +1269,7 @@ namespace DemoCheats
                 // Create the log file and write some initial information to it.
                 File.WriteAllLines(_logFilePath, new List<string> { $"{BuildInfo.Name} - {BuildInfo.Version}", $"CMS 2026 Demo - {Il2Cpp.GameSettings.BuildVersion}", $"Log Created: {logDate}" });
             }
-            catch (Exception ex)
+            catch (System.Exception ex)
             {
                 // In case logging initialization fails, keep using in-memory buffer.
                 _logFilePath = string.Empty;
@@ -1114,12 +1313,12 @@ namespace DemoCheats
                     else
                     {
                         // recreate file if missing
-                        File.WriteAllLines(_logFilePath, new[] { $"{BuildInfo.Name} - {BuildInfo.Version}", $"CMS 2026 Demo - {GameSettings.BuildVersion}", $"Log Created: {DateTime.Now:MM-dd-yyyy HH:mm:ss}" });
+                        File.WriteAllLines(_logFilePath, new[] { $"{BuildInfo.Name} - {BuildInfo.Version}", $"{BuildInfo.MelonGameName} - {GameSettings.BuildVersion}", $"Log Created: {DateTime.Now:MM-dd-yyyy HH:mm:ss}" });
                         File.AppendAllLines(_logFilePath, _logs);
                         _logs.Clear();
                     }
                 }
-                catch (Exception ex)
+                catch (System.Exception ex)
                 {
                     // If it fails, keep entries in _logs for next attempt
                     _logs.Add($"{DateTime.Now:HH:mm:ss}\tLogService.WriteToLog: Unable to write to log: {ex.Message}");

@@ -30,7 +30,7 @@ namespace DemoCheats
         /// <param name="wareItemsManager">The Current Warehouse Items Manager.</param>
         /// <returns>(itemCount, errorString) Tuple with the number of items that were moved and a potential error message.</returns>
         private static (int itemCount, string errorString) MoveInventoryItemsToWarehouse(
-            Il2CppSystem.Collections.Generic.List<ItemStack> itemStacks,
+			Il2CppSystem.Collections.Generic.List<ItemStack> itemStacks,
             ItemContainerManager invItemsManager, ItemContainerManager wareItemsManager)
         {
 #if DEBUG
@@ -105,7 +105,7 @@ namespace DemoCheats
             return (invItemCount, string.Empty);
         }
         private static (int itemCount, string errorString) MoveWarehouseItemsToInventory(
-            Il2CppSystem.Collections.Generic.List<ItemStack> itemStacks,
+			Il2CppSystem.Collections.Generic.List<ItemStack> itemStacks,
             ItemContainerManager invItemsManager, ItemContainerManager wareItemsManager)
         {
 #if DEBUG
@@ -456,7 +456,7 @@ namespace DemoCheats
                             {
                                 if (slItems?.Count > 0)
                                 {
-                                    Il2CppSystem.Collections.Generic.List<IShopListItem> tempList = new Il2CppSystem.Collections.Generic.List<IShopListItem>();
+									Il2CppSystem.Collections.Generic.List<IShopListItem> tempList = new Il2CppSystem.Collections.Generic.List<IShopListItem>();
                                     foreach (var slItem in slItems)
                                     {
                                         if (slItem.ShopType == partsPage.ShopType)

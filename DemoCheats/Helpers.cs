@@ -2,14 +2,16 @@
 using Il2CppCMS.Core;
 using Il2CppCMS.Core.Car;
 using Il2CppCMS.Core.Car.Body;
-using Il2CppCMS.DevTools;
 using Il2CppCMS.DevTools.QC;
+using Il2CppCMS.Managers.ActionsManager;
 using Il2CppCMS.Player.Controller;
 using Il2CppCMS.Player.Skills;
 using Il2CppCMS.Shared;
 using Il2CppCMS.UI;
 using Il2CppCMS.UI.Logic;
 using Il2CppCMS.UI.Windows;
+using Il2CppSystem;
+using MelonLoader;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -177,7 +179,29 @@ namespace DemoCheats
 
         public static void MaxSkills()
         {
-            Singleton<TestScript>.Instance.UnlockAllSkills();
+            //Singleton<TestScript>.Instance.UnlockAllSkills();
+            // If the user upgrades a skill, the UnlockAllSkills() cheat doesn't work.
+            var skillNames = new List<string>() { "fast_mount", "fast_partremove", "inventory_capacity" };
+            var playerSkillSystem = Resources.FindObjectsOfTypeAll<PlayerSkillSystem>().FirstOrDefault();
+            foreach (var skillName in skillNames)
+            {
+                var isFullyUnlocked = playerSkillSystem.IsFullyUnlocked(skillName);
+                while (!isFullyUnlocked)
+                {
+                    var currentLevel = playerSkillSystem.GetCurrentSkillLevel(skillName);
+                    playerSkillSystem.IncreaseSkillLevel(skillName, currentLevel);
+                    isFullyUnlocked = playerSkillSystem.IsFullyUnlocked(skillName);
+                }
+            }
+            playerSkillSystem.UnlockAll();
+#if DEBUG
+            // This prints all the skill names.
+            //var skillData = playerSkillSystem.skillsData;
+            //foreach (var skill in skillData.Keys)
+            //{
+            //    MelonLogger.Msg($"Skill: {skill}");
+            //}
+#endif
             LogService.Instance.WriteToLog($"Maxed Player Skills");
             UIManager.Get().ShowPopup("Maxed Player Skills.", PopupType.Normal);
         }
@@ -185,7 +209,7 @@ namespace DemoCheats
         /// <summary>
         /// Adjusts the Player Walk Speed Up/Down.
         /// </summary>
-        /// <param name="up"></param>
+        /// <param name="up">False: Speed Down, True: Speed Up</param>
         public static void AdjustWalkSpeedUp(bool up)
         {
             if (GameState.CurrentNetworkMode == GameNetworkMode.Client)
@@ -248,7 +272,7 @@ namespace DemoCheats
         /// <summary>
         /// Adjusts the Player Running Speed Up/Down
         /// </summary>
-        /// <param name="up"></param>
+        /// <param name="up">False: Speed Down, True: Speed Up</param>
         public static void AdjustRunSpeedUp(bool up)
         {
             if (GameState.CurrentNetworkMode == GameNetworkMode.Client)
@@ -384,10 +408,10 @@ namespace DemoCheats
                                  goInView.name.Contains("taillight"))
                         {
                             LogService.Instance.WriteToLog("Looking at headlight or taillight");
-                            var meshRender = goInView.GetComponent<MeshRenderer>();
-                            if (meshRender != null)
+                            var meshRenderer = goInView.GetComponent<MeshRenderer>();
+                            if (meshRenderer != null)
                             {
-                                var materials = meshRender.materials;
+                                var materials = meshRenderer.materials;
                                 foreach (var material in materials)
                                 {
                                     if (material.name.Contains("glass"))
@@ -396,6 +420,11 @@ namespace DemoCheats
                                     }
                                 } 
                             }
+                            var bodyPart = goInView.GetComponent<CarBodyPart>();
+                            if (bodyPart != null)
+                            {
+                                bodyPart.IsTinted = true;
+                            } 
                             _currentColorIndex--;
                         }
                         else if (goInView.name.Contains("window"))
@@ -404,8 +433,7 @@ namespace DemoCheats
                             var bodyPart = goInView.GetComponent<CarBodyPart>();
                             if (bodyPart != null)
                             {
-                                bodyPart.TintColor = new Color32(0, 0, 0, 225);
-                                bodyPart.IsTinted = true;
+                                bodyPart.UpdateTintVisuals(true, new Color32(0, 0, 0, 210));
                             }
                             _currentColorIndex--;
                         }
@@ -451,6 +479,70 @@ namespace DemoCheats
                 // The car is being painted.
                 UIManager.Get().ShowPopup("Please wait while the car is being painted.", PopupType.Normal);
                 LogService.Instance.WriteToLog("A car is currently being painted");
+            }
+        }
+        public static void TintAllVehicleParts()
+        {
+            var carLoadersGO = Resources.FindObjectsOfTypeAll<GameObject>().FirstOrDefault(go => go.name == "CarLoaders");
+            if (carLoadersGO != null)
+            {
+                var carLoaders = carLoadersGO.GetComponentsInChildren<CarLoader>();
+                if (carLoaders?.Count > 0)
+                {
+                    foreach (var carLoader in carLoaders)
+                    {
+                        if (!string.IsNullOrWhiteSpace(carLoader.CarID))
+                        {
+                            var bodyParts = carLoader.Model.CarParts;
+                            foreach (var bodyPart in bodyParts.Values)
+                            {
+                                if (bodyPart.IsBodyPart() && bodyPart.name.Contains("window"))
+                                {
+                                    var windowBodyPart = bodyPart.TryCast<CarBodyPart>();
+                                    if (windowBodyPart.IsTinted)
+                                    {
+                                        windowBodyPart.UpdateTintVisuals(true, new Color32(0, 0, 0, 210));
+                                    }
+                                }
+                                else if (bodyPart.IsBodyPart() && bodyPart.name.Contains("light"))
+                                {
+                                    var lightBodyPart = bodyPart.TryCast<CarBodyPart>();
+                                    if (lightBodyPart.IsTinted)
+                                    {
+                                        var meshRenderer = bodyPart.GameObject.GetComponent<MeshRenderer>();
+                                        if (meshRenderer != null)
+                                        {
+                                            var materials = meshRenderer.materials;
+                                            foreach (var material in materials)
+                                            {
+                                                if (material.name.Contains("glass"))
+                                                {
+                                                    material.color = new Color(0.0f, 0.0f, 0.0f, 0.825f);
+                                                }
+                                            }
+                                        }
+                                        else
+                                        {
+                                            LogService.Instance.WriteToLog("MeshRenderer is null");
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            LogService.Instance.WriteToLog("CarLoader is not loaded");
+                        }
+                    }
+                }
+                else
+                {
+                    LogService.Instance.WriteToLog("CarLoaders are 0");
+                }
+            }
+            else
+            {
+                LogService.Instance.WriteToLog("CarLoadersGO is null");
             }
         }
 
