@@ -20,6 +20,7 @@ A collection of cheats for the Car Mechanic Simulator 2027 Demo.
 * Change the Game Speed.
 * Change the Player Walk and Run Speed. **(HOST SETS FOR BOTH)**
 * Paint the car and wheels an approved factory color by looping through the available ones. **(HOST ONLY)**
+* Tint the windows and lights with the Cycle Paint button. **(HOST ONLY)**
 * Repair the body parts to 100% when looking at a car. **(HOST ONLY)**
 * Spawn the 7 available Demo cars (with or w/o random condition). **(HOST ONLY)**
 * **Maximum 10 cars allowed in the Demo**
