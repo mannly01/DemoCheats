@@ -9,7 +9,6 @@ A collection of cheats for the Car Mechanic Simulator 2027 Demo.
 * Press the TransferAll key (K) on the Issues to Fix page to add all the **discovered** items to the Shopping List.
 * Hold the TransferAll key (K) on the Issues to Fix page to mark all the **discovered** parts on the car.
 * Added the ability to toggle the fast examination of parts.
-* Known Issue: When entering and then exiting a vehicle, the window tint disappears and reappears on save/reload.
 * Fixed Bug: The window tint would turn off when the car paint was cycled. The tint would reappear on save/reload.
 * Fixed Bug: The Cycle Paint button would have to be pressed twice to tint windows and the tint would randomly turn off while driving.
 * **Some functions are only available to the Host in multiplayer.**
@@ -40,7 +39,7 @@ A collection of cheats for the Car Mechanic Simulator 2027 Demo.
 * Move all items from the Shopping List to Shopping Cart with one key press. **(K)**
 * Add all car parts to the Shopping List from the Parts page of the Car with one key press. **(K)**
 * Mark all car parts from the Parts page of the Car with one key hold. **(HOLD K)**
-* Clear the entire Shopping List while on the Shop Home Page with one key hold **(HOLD K)**
+* Clear the entire Shopping List while on the Shop Home Page with one key hold. **(HOLD K)**
 * Add all **discovered** car parts to the Shopping List on the Issues to Fix page with one key press. **(K)**
 * Mark all **discovered** car parts on the Issues to Fix page with one key hold. **(HOLD K)**
 
