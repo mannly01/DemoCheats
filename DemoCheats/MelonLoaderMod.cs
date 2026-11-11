@@ -9,6 +9,7 @@ using Il2CppCMS.Player.Controller;
 using Il2CppCMS.Scenes.Loader;
 using Il2CppCMS.UI;
 using Il2CppCMS.UI.Logic;
+using Il2CppCMS.UI.Logic.CarInfo.Containers;
 using Il2CppCMS.UI.Windows;
 using Il2CppSystem;
 using MelonLoader;
@@ -33,9 +34,9 @@ namespace DemoCheats
         public const string Author = "mannly01";
         public const string Company = "The Mann Design";
 #if DEBUG
-        public const string Version = "2.1.99";
+        public const string Version = "2.2.99";
 #else
-        public const string Version = "2.1.3";
+        public const string Version = "2.2.0";
 #endif
         public const string DownloadLink = "https://www.nexusmods.com/carmechanicsimulator2027/mods/6";
         public const string MelonGameCompany = "Red Dot Games";
@@ -143,6 +144,15 @@ namespace DemoCheats
         }
         private readonly MelonPreferences_Entry<bool> _fastMount;
         /// <summary>
+        /// Setting to save Fast Examination between sessions.
+        /// </summary>
+        public bool FastExam
+        {
+            get => _fastExam.Value;
+            set { _fastExam.Value = value; }
+        }
+        private readonly MelonPreferences_Entry<bool> _fastExam;
+        /// <summary>
         /// Setting to save Unlimited Inventory between sessions.
         /// </summary>
         public bool UnlimitedInventory
@@ -248,6 +258,8 @@ namespace DemoCheats
                 description: "This setting changes (and stores) the Player's Max Run Speed. Default: 5.0");
             _fastMount = _settings.CreateEntry(nameof(FastMount), false,
                 description: "This setting changes (and stores) whether Fast Mount Mode is on/off. Default: false");
+            _fastExam = _settings.CreateEntry(nameof(FastExam), false,
+                description: "This setting changes (and stores) whether Fast Examination Mode is on/off. Default: false");
             _unlimitedInventory = _settings.CreateEntry(nameof(UnlimitedInventory), false,
                 description: "This setting changes (and stores) whether the Inventory is unlimited (actually 10,000). Default: false\nThe Warehouse Inventory will incorrectly display an item maximum.");
 
@@ -291,6 +303,7 @@ namespace DemoCheats
             LogService.Instance.WriteToLog($"WalkSpeed: {WalkSpeed}", "ConfigFile.Init");
             LogService.Instance.WriteToLog($"RunSpeed: {RunSpeed}", "ConfigFile.Init");
             LogService.Instance.WriteToLog($"FastMount: {FastMount}", "ConfigFile.Init");
+            LogService.Instance.WriteToLog($"FastExam: {FastExam}", "ConfigFile.Init");
             LogService.Instance.WriteToLog($"Unlimited Inventory: {UnlimitedInventory}", "ConfigFile.Init");
 
             // The following settings are for the TransferAll additions.
@@ -380,27 +393,6 @@ namespace DemoCheats
                         {
                             foreach (var lifter in lifters)
                             {
-                                //var lifterTransform = lifter.transform;
-                                //if (lifterTransform != null)
-                                //{
-                                //    if (lifterTransform.position.x == 0)
-                                //    {
-                                //        _carLifterOne = lifter;
-                                //    }
-                                //    else if (lifterTransform.position.x < 0 && lifterTransform.position.x > -10)
-                                //    {
-                                //        _carLifterTwo = lifter;
-                                //    }
-                                //    else if (lifterTransform.position.x < -10)
-                                //    {
-                                //        _carLifterThree = lifter;
-                                //    }
-
-                                //}
-                                //else
-                                //{
-                                //    LogService.Instance.WriteToLog("Lifter Transform null");
-                                //}
                                 if (lifter.CarPlace == CarPlace.CarLifter1)
                                 {
                                     _carLifterOne = lifter;
@@ -604,7 +596,7 @@ namespace DemoCheats
                             LogService.Instance.WriteToLog($"Unlimited Inventory After: {InventoryCommands.UnlimitedInventory}");
 #endif
                         }
-
+                        
                         Helpers.TintAllVehicleParts();
                     }
 
@@ -632,9 +624,28 @@ namespace DemoCheats
 #endif
                     }
 
+                    var windowManager = WindowManager.Instance;
+                    if (windowManager != null)
+                    {
+                        var examMenu = windowManager.GetWindowByID<ExamineMenu>(WindowID.ExamineMenu);
+                        if (examMenu != null)
+                        {
+#if DEBUG
+                            LogService.Instance.WriteToLog($"FastExam Before: {examMenu.fillDuration}");
+#endif
+                            if (_configFile.FastExam)
+                            {
+                                examMenu.fillDuration = 0.1f;
+#if DEBUG
+                                LogService.Instance.WriteToLog($"FastExam After: {examMenu.fillDuration}");
+#endif
+                            }
+                        }
+                    }
+
 #if DEBUG
                     // Get the Garage Car Lifters for later use.
-                    GetCarLifters(); 
+                    //GetCarLifters(); 
 #endif
 
                     yield return null;
@@ -656,11 +667,11 @@ namespace DemoCheats
         }
 
 #if DEBUG
-        private void MoveCarLifter(int CarLifterIndex = 1)
+        private void MoveCarLifter(int carLifterIndex = 1)
         {
             CarLifter carLifter;
             LifterState carLifterState;
-            switch (CarLifterIndex)
+            switch (carLifterIndex)
             {
                 case 2:
                     carLifter = _carLifterTwo;
@@ -681,56 +692,85 @@ namespace DemoCheats
                 {
                     if (carLifter.ConnectedCar != null)
                     {
-                        switch (carLifter.CurrentState)
+                        if (!carLifter.IsBlocked())
                         {
-                            case LifterState.Floor:
-                                carLifter.UseButton(LifterButton.Up);
-                                carLifterState = LifterState.Floor;
-                                break;
-                            case LifterState.Middle:
-                                if (carLifterState == LifterState.Floor)
-                                {
+                            switch (carLifter.CurrentState)
+                            {
+                                case LifterState.Floor:
                                     carLifter.UseButton(LifterButton.Up);
-                                }
-                                else
-                                {
+                                    carLifterState = LifterState.Floor;
+                                    break;
+                                case LifterState.Middle:
+                                    if (carLifterState == LifterState.Floor)
+                                    {
+                                        carLifter.UseButton(LifterButton.Up);
+                                    }
+                                    else
+                                    {
+                                        carLifter.UseButton(LifterButton.Down);
+                                    }
+                                    carLifterState = LifterState.Middle;
+                                    break;
+                                case LifterState.Top:
                                     carLifter.UseButton(LifterButton.Down);
-                                }
-                                carLifterState = LifterState.Middle;
-                                break;
-                            case LifterState.Top:
-                                carLifter.UseButton(LifterButton.Down);
-                                carLifterState = LifterState.Top;
-                                break;
-                            default:
-                                break;
+                                    carLifterState = LifterState.Top;
+                                    break;
+                                default:
+                                    break;
+                            }
+                            switch (carLifterIndex)
+                            {
+                                case 2:
+                                    if (carLifterState == carLifter.CurrentState)
+                                    {
+                                        _carLifterTwoPrevState = LifterState.Floor;
+                                    }
+                                    else
+                                    {
+                                        _carLifterTwoPrevState = carLifterState;
+                                    }
+                                    break;
+                                case 3:
+                                    if (carLifterState == carLifter.CurrentState)
+                                    {
+                                        _carLifterThreePrevState = LifterState.Floor;
+                                    }
+                                    else
+                                    {
+                                        _carLifterThreePrevState = carLifterState;
+                                    }
+                                    break;
+                                default:
+                                    if (carLifterState == carLifter.CurrentState)
+                                    {
+                                        _carLifterOnePrevState = LifterState.Floor;
+                                    }
+                                    else
+                                    {
+                                        _carLifterOnePrevState = carLifterState;
+                                    }
+                                    break;
+                            } 
                         }
-                        switch (CarLifterIndex)
+                        else
                         {
-                            case 2:
-                                _carLifterTwoPrevState = carLifterState;
-                                break;
-                            case 3:
-                                _carLifterThreePrevState = carLifterState;
-                                break;
-                            default:
-                                _carLifterOnePrevState = carLifterState;
-                                break;
+                            UIManager.Get().ShowPopup($"Car Lifter {carLifterIndex} is blocked", PopupType.Normal);
+                            LogService.Instance.WriteToLog($"Car Lifter {carLifterIndex} is blocked");
                         }
                     }
                     else
                     {
-                        LogService.Instance.WriteToLog($"Carlifter {CarLifterIndex} has no connected car");
+                        LogService.Instance.WriteToLog($"Carlifter {carLifterIndex} has no connected car");
                     }
                 }
                 else
                 {
-                    LogService.Instance.WriteToLog($"Carlifter {CarLifterIndex} is moving");
+                    LogService.Instance.WriteToLog($"Carlifter {carLifterIndex} is moving");
                 }
             }
             else
             {
-                LogService.Instance.WriteToLog($"Carlifter {CarLifterIndex} is null");
+                LogService.Instance.WriteToLog($"Carlifter {carLifterIndex} is null");
             }
         } 
 #endif
@@ -765,27 +805,30 @@ namespace DemoCheats
             //    } 
             //}
 
-            if (Input.GetKeyUp(KeyCode.B))
-            {
-                // Lifter 1
-                MoveCarLifter(1);
-            }
-            if (Input.GetKeyUp(KeyCode.N))
-            {
-                // Lifter 2
-                MoveCarLifter(2);
-            }
-            if (Input.GetKeyUp(KeyCode.M))
-            {
-                // Lifter 3
-                MoveCarLifter(3);
-            }
+            //if (Input.GetKeyUp(KeyCode.B))
+            //{
+            //    // Lifter 1
+            //    MoveCarLifter(1);
+            //}
+            //if (Input.GetKeyUp(KeyCode.N))
+            //{
+            //    // Lifter 2
+            //    MoveCarLifter(2);
+            //}
+            //if (Input.GetKeyUp(KeyCode.M))
+            //{
+            //    // Lifter 3
+            //    MoveCarLifter(3);
+            //}
 
             if (Input.GetKeyUp(KeyCode.J))
             {
                 if (!CheckIfInputIsFocused())
                 {
                     LogService.Instance.WriteToLog("Debug Key (J) Pressed");
+
+                    // TODO: Add a new button for this:
+                    DevSettings.ShowUnavailablePartsInShop = true;
 
                     //ShowSceneName();
                     //ShowWindowName();
@@ -1027,12 +1070,49 @@ namespace DemoCheats
 #endif
                                 if (windowManager.IsWindowActive(WindowID.CarInfo))
                                 {
-                                    // The Car Parts Info Window is currently being displayed,
-                                    // so mark all the parts on the Car.
+                                    // The Car Parts Info Window is currently being displayed
                                     var carInfoWindow = windowManager.GetWindowByID<CarInfoWindow>(WindowID.CarInfo);
                                     if (carInfoWindow.partsTab.isActiveAndEnabled)
                                     {
-                                        MelonCoroutines.Start(TransferAll.MarkAllCarParts());
+                                        // The Parts Tab is being displayed,
+                                        // so mark all the parts on the Car.
+                                        var partsPageManager = carInfoWindow.partsTab.pageManager;
+                                        var partItems = partsPageManager.Items.Cast<Il2CppSystem.Collections.Generic.List<CarInfoPart>>();
+                                        MelonCoroutines.Start(TransferAll.MarkAllParts(partItems));
+                                        var partsCategory = carInfoWindow.partsTab.currentCategory;
+                                        var partsSorting = carInfoWindow.partsTab.currentSortType;
+                                        partsPageManager.RefreshParts(partsCategory, partsSorting, null);
+                                    }
+                                    else if (carInfoWindow.orderTab.isActiveAndEnabled)
+                                    {
+                                        // The Issues To Fix Window is currently being displayed,
+                                        // so mark all the parts that have been discovered on the Car.
+                                        var orderPageManager = carInfoWindow.orderTab.orderPageManager;
+                                        var partItems = orderPageManager.Items.Cast<Il2CppSystem.Collections.Generic.List<CarInfoPart>>();
+                                        MelonCoroutines.Start(TransferAll.MarkAllParts(partItems));
+                                        carInfoWindow.orderTab.ResetMe();
+                                    }
+                                }
+                                else if (windowManager.IsWindowActive(WindowID.Shop))
+                                {
+                                    var shopWindow = windowManager.GetWindowByID<ShopWindow>(WindowID.Shop);
+                                    if (shopWindow != null)
+                                    {
+#if DEBUG
+                                        MelonLogger.Msg($"Current Shop Type: {shopWindow.currentShopType}");
+                                        MelonLogger.Msg($"Home Page: {shopWindow.HomePage.isActiveAndEnabled}");
+#endif
+                                        // If the user is on the Home Page of the Shop.
+                                        if (shopWindow.HomePage.isActiveAndEnabled)
+                                        {
+                                            // Clear the Shopping List.
+                                            var passed = TransferAll.ClearShoppingList();
+                                            if (passed)
+                                            {
+                                                // Update the Shop Window to remove the Shopping List icons.
+                                                shopWindow.homePage.DisableShopListIcons();
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -1050,12 +1130,19 @@ namespace DemoCheats
                                 }
                                 else if (windowManager.IsWindowActive(WindowID.CarInfo))
                                 {
-                                    // The Car Parts Info Window is currently being displayed,
-                                    // so move all the items to the Shopping Cart.
+                                    // The Car Parts Info Window is currently being displayed.
                                     var carInfoWindow = windowManager.GetWindowByID<CarInfoWindow>(WindowID.CarInfo);
                                     if (carInfoWindow.partsTab.isActiveAndEnabled)
                                     {
+                                        // The Parts Tab is being displayed,
+                                        // so move all the items to the Shopping Cart.
                                         TransferAll.MoveAllItemsToShoppingCart();
+                                    }
+                                    else if (carInfoWindow.orderTab.isActiveAndEnabled)
+                                    {
+                                        // The Issues To Fix Window is currently being displayed,
+                                        // so move all the items to the Shopping Cart.
+                                        TransferAll.MoveAllOrderPartsToShoppingList();
                                     }
                                 }
                                 else if (windowManager.IsWindowActive(WindowID.Shop))
@@ -1065,7 +1152,7 @@ namespace DemoCheats
                                     {
                                         // The Shop Window is currently being displayed,
                                         // so move all the Shopping List items to the Cart.
-                                        MelonCoroutines.Start(TransferAll.MoveShoppingListToCart());
+                                        TransferAll.MoveShoppingListToCart();
                                     }
                                 }
                             }
@@ -1286,12 +1373,10 @@ namespace DemoCheats
         {
             var logString = $"{DateTime.Now:HH:mm:ss}\t{callerName}\t{message}.";
 
-#if DEBUG
             if (!message.Contains("Called"))
             {
                 MelonLogger.Msg(message);
             }
-#endif
 
             lock (_sync)
             {

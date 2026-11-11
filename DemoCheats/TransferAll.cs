@@ -431,11 +431,11 @@ namespace DemoCheats
                 LogService.Instance.WriteToLog("Warehouse window is not open");
             }
         }
-        public static System.Collections.IEnumerator MoveShoppingListToCart()
+        public static void MoveShoppingListToCart()
         {
             var windowManager = WindowManager.Instance;
             if (windowManager == null)
-                yield return null;
+               return;
 
             if (windowManager.activeWindows.count > 0)
             {
@@ -557,10 +557,21 @@ namespace DemoCheats
                 } 
 #endif
             }
-
-            yield return null;
         }
+        public static bool ClearShoppingList()
+        {
+            var shopListManager = Singleton<GameManager>.Instance.shopListManager;
+            if (shopListManager.listItems.Count > 0)
+            {
+                shopListManager.Clear();
+            }
+            if (shopListManager.listItems.Count == 0)
+            {
+                return true;
+            }
 
+            return false;
+        }
         public static void MoveAllItemsToShoppingCart()
         {
             var windowManager = WindowManager.Instance;
@@ -573,8 +584,8 @@ namespace DemoCheats
                     var carInfoWindow = windowManager.GetWindowByID<CarInfoWindow>(WindowID.CarInfo);
                     if (carInfoWindow != null)
                     {
-                        var currentCarInfoPage = carInfoWindow.currentTab;
 #if DEBUG
+                        var currentCarInfoPage = carInfoWindow.currentTab;
                         LogService.Instance.WriteToLog($"Current CarInfo Page: {currentCarInfoPage}");
 #endif
 
@@ -597,7 +608,7 @@ namespace DemoCheats
 #if DEBUG
                                 LogService.Instance.WriteToLog($"Page {partsManager.currentPage}, Page Item Count: {partsManager.ItemObjects.Count}"); 
 #endif
-                                if (partItemObjects != null)
+                                if (partItemObjects.Count > 0)
                                 {
                                     if (partsManager.CurrentPageIsLast())
                                     {
@@ -636,7 +647,7 @@ namespace DemoCheats
 #if DEBUG
                                 else
                                 {
-                                    LogService.Instance.WriteToLog("ItemObject array is null");
+                                    LogService.Instance.WriteToLog("ItemObject array is empty");
                                 }
 #endif
                             }
@@ -646,11 +657,11 @@ namespace DemoCheats
                 }
             }
         }
-        public static System.Collections.IEnumerator MarkAllCarParts()
+        public static void MoveAllOrderPartsToShoppingList()
         {
             var windowManager = WindowManager.Instance;
             if (windowManager == null)
-                yield return null;
+                return;
             if (windowManager.activeWindows.count > 0)
             {
                 if (windowManager.IsWindowActive(WindowID.CarInfo))
@@ -658,57 +669,79 @@ namespace DemoCheats
                     var carInfoWindow = windowManager.GetWindowByID<CarInfoWindow>(WindowID.CarInfo);
                     if (carInfoWindow != null)
                     {
-                        var currentCarInfoPage = carInfoWindow.currentTab;
 #if DEBUG
+                        var currentCarInfoPage = carInfoWindow.currentTab;
                         LogService.Instance.WriteToLog($"Current CarInfo Page: {currentCarInfoPage}");
 #endif
 
-                        var partsTab = carInfoWindow.partsTab;
-                        if (partsTab.isActiveAndEnabled)
+                        var orderTab = carInfoWindow.orderTab;
+                        if (orderTab.isActiveAndEnabled)
                         {
-                            var partsCategory = partsTab.currentCategory;
-                            var partsSorting = partsTab.currentSortType;
-                            var partsManager = partsTab.pageManager;
+                            var orderPageManager = orderTab.orderPageManager;
+                            var orderItems = orderPageManager.itemObjects;
 #if DEBUG
-                            LogService.Instance.WriteToLog($"Category: {partsCategory}, Sorting: {partsSorting}, ItemCount: {partsManager.GetItemsCount()}, Page Item Count: {partsManager.CurrentPageItemsCount}");
+                            LogService.Instance.WriteToLog($"Order Item Count: {orderPageManager.ItemObjects.Count}");
 #endif
-
-                            var partItems = partsManager.Items.Cast<Il2CppSystem.Collections.Generic.List<CarInfoPart>>();
-                            if (partItems != null)
+                            if (orderItems.Count > 0)
                             {
-                                SoundManager.Get().PlaySFX("MarkPart");
-                                var uiVolume = SoundManager.Get().uiSoundsAudioSource.volume;
-                                LogService.Instance.WriteToLog($"UI Volume Before: {SoundManager.Get().uiSoundsAudioSource.volume}");
-                                SoundManager.Get().uiSoundsAudioSource.volume = 0;
-                                LogService.Instance.WriteToLog($"UI Volume After: {SoundManager.Get().uiSoundsAudioSource.volume}");
-                                foreach (var partItem in partItems)
+                                foreach (var orderItem in orderItems)
                                 {
-                                    if (partItem.CanBeMarked && !partItem.IsMarked)
+                                    if (orderItem.CanAddToShopList())
                                     {
-                                        partItem.MarkAction.Invoke(true);
+                                        orderItem.AddToShopList();
                                     }
 #if DEBUG
                                     else
                                     {
-                                        LogService.Instance.WriteToLog($"{partItem.Name} couldn't be marked");
+                                        LogService.Instance.WriteToLog($"{orderItem.name} couldn't be added to shopping list");
                                     }
 #endif
                                 }
-                                partsManager.RefreshParts(partsCategory, partsSorting, null);
-                                yield return new WaitForSeconds(1.0f);
-                                yield return new WaitForFixedUpdate();
-                                yield return new WaitForEndOfFrame();
-                                SoundManager.Get().uiSoundsAudioSource.volume = uiVolume;
                             }
 #if DEBUG
                             else
                             {
-                                LogService.Instance.WriteToLog("Cast to list failed");
-                            } 
+                                LogService.Instance.WriteToLog("ItemObject array is empty");
+                            }
 #endif
+                            orderTab.ResetMe();
                         }
                     }
                 }
+            }
+        }
+
+        public static System.Collections.IEnumerator MarkAllParts(
+            Il2CppSystem.Collections.Generic.List<CarInfoPart> partItems)
+        {
+            if (partItems.Count > 0)
+            {
+                SoundManager.Get().PlaySFX("MarkPart");
+                var uiVolume = SoundManager.Get().uiSoundsAudioSource.volume;
+#if DEBUG
+                LogService.Instance.WriteToLog($"UI Volume Before: {SoundManager.Get().uiSoundsAudioSource.volume}"); 
+#endif
+                SoundManager.Get().uiSoundsAudioSource.volume = 0;
+#if DEBUG
+                LogService.Instance.WriteToLog($"UI Volume After: {SoundManager.Get().uiSoundsAudioSource.volume}"); 
+#endif
+                foreach (var partItem in partItems)
+                {
+                    if (partItem.CanBeMarked && !partItem.IsMarked)
+                    {
+                        partItem.MarkAction.Invoke(true);
+                    }
+#if DEBUG
+                    else
+                    {
+                        LogService.Instance.WriteToLog($"{partItem.Name} couldn't be marked");
+                    }
+#endif
+                }
+                yield return new WaitForSeconds(1.0f);
+                yield return new WaitForFixedUpdate();
+                yield return new WaitForEndOfFrame();
+                SoundManager.Get().uiSoundsAudioSource.volume = uiVolume;
             }
 
             yield return null;

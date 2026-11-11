@@ -3,14 +3,13 @@ using Il2CppCMS.Core;
 using Il2CppCMS.Core.Car;
 using Il2CppCMS.Core.Car.Body;
 using Il2CppCMS.DevTools.QC;
-using Il2CppCMS.Managers.ActionsManager;
+using Il2CppCMS.Managers;
 using Il2CppCMS.Player.Controller;
 using Il2CppCMS.Player.Skills;
 using Il2CppCMS.Shared;
 using Il2CppCMS.UI;
 using Il2CppCMS.UI.Logic;
 using Il2CppCMS.UI.Windows;
-using Il2CppSystem;
 using MelonLoader;
 using System.Collections.Generic;
 using System.Linq;
@@ -323,6 +322,9 @@ namespace DemoCheats
             LogService.Instance.WriteToLog($"New Run Speed: {newSpeed}");
             UIManager.Get().ShowPopup($"New Run Speed: {newSpeed}.", PopupType.Normal);
         }
+        /// <summary>
+        /// Toggles the Unlimited Player and Warehouse Inventory ON/OFF.
+        /// </summary>
         public static void ToggleUnlimitedInventory()
         {
             if (GameState.CurrentNetworkMode == GameNetworkMode.Client)
@@ -337,7 +339,32 @@ namespace DemoCheats
             LogService.Instance.WriteToLog($"Unlimited Inventory: {_configFile.UnlimitedInventory}");
             UIManager.Get().ShowPopup($"Unlimited Inventory: {InventoryCommands.UnlimitedInventory}.", PopupType.Normal);
         }
-
+        /// <summary>
+        /// Toggles the Fast Examination Mode ON/OFF.
+        /// </summary>
+        public static void ToggleFastExamination()
+        {
+            var windowManager = WindowManager.Instance;
+            if (windowManager != null)
+            {
+                var examWindow = windowManager.GetWindowByID<ExamineMenu>(WindowID.ExamineMenu);
+                if (examWindow != null)
+                {
+                    if (examWindow.fillDuration == 1.5f)
+                    {
+                        examWindow.fillDuration = 0.1f;
+                        _configFile.FastExam = true;
+                    }
+                    else
+                    {
+                        examWindow.fillDuration = 1.5f;
+                        _configFile.FastExam = false;
+                    }
+                    LogService.Instance.WriteToLog($"Fast Examination: {examWindow.fillDuration}");
+                    UIManager.Get().ShowPopup($"Fast Examination: {_configFile.FastExam}.", PopupType.Normal);
+                } 
+            }
+        }
         /// <summary>
         /// Cycles through the cars available colors.
         /// </summary>
@@ -430,10 +457,13 @@ namespace DemoCheats
                         else if (goInView.name.Contains("window"))
                         {
                             LogService.Instance.WriteToLog("Looking at window");
+
                             var bodyPart = goInView.GetComponent<CarBodyPart>();
                             if (bodyPart != null)
                             {
+                                bodyPart.TintColor = new Color32(0, 0, 0, 210);
                                 bodyPart.UpdateTintVisuals(true, new Color32(0, 0, 0, 210));
+                                bodyPart.IsTinted = true;
                             }
                             _currentColorIndex--;
                         }
@@ -489,8 +519,9 @@ namespace DemoCheats
                 var carLoaders = carLoadersGO.GetComponentsInChildren<CarLoader>();
                 if (carLoaders?.Count > 0)
                 {
-                    foreach (var carLoader in carLoaders)
+                    for (int i = 0; i < carLoaders.Count; i++)
                     {
+                        var carLoader = carLoaders[i];
                         if (!string.IsNullOrWhiteSpace(carLoader.CarID))
                         {
                             var bodyParts = carLoader.Model.CarParts;
@@ -501,6 +532,7 @@ namespace DemoCheats
                                     var windowBodyPart = bodyPart.TryCast<CarBodyPart>();
                                     if (windowBodyPart.IsTinted)
                                     {
+                                        windowBodyPart.TintColor = new Color32(0, 0, 0, 210);
                                         windowBodyPart.UpdateTintVisuals(true, new Color32(0, 0, 0, 210));
                                     }
                                 }
@@ -523,7 +555,7 @@ namespace DemoCheats
                                         }
                                         else
                                         {
-                                            LogService.Instance.WriteToLog("MeshRenderer is null");
+                                            LogService.Instance.WriteToLog($"CarLoader {i + 1}: MeshRenderer is null");
                                         }
                                     }
                                 }
@@ -531,7 +563,7 @@ namespace DemoCheats
                         }
                         else
                         {
-                            LogService.Instance.WriteToLog("CarLoader is not loaded");
+                            LogService.Instance.WriteToLog($"CarLoader {i + 1} is not loaded");
                         }
                     }
                 }

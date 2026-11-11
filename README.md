@@ -4,11 +4,14 @@ A collection of cheats for the Car Mechanic Simulator 2027 Demo.
 ## REQUIREMENTS
 * [MelonLoader 0.7.3](https://github.com/LavaGang/MelonLoader/releases/tag/v0.7.3)
 
-## UPDATE - 2.1.3
-* Fixed Bug: The window and light tint were not persisting after the game exited.
-* Fixed Bug: The Max Skills cheat wasn't working if the user upgraded a skill manually first.
-* Fixed Bug: RepairBody key was constantly being checked in OnUpdate.
-* Added multiple comments to source files and adjusted log file output.
+## UPDATE - 2.2.0
+* Hold the TransferAll key (K) on the Home page of the Shop to clear the Shopping List.
+* Press the TransferAll key (K) on the Issues to Fix page to add all the **discovered** items to the Shopping List.
+* Hold the TransferAll key (K) on the Issues to Fix page to mark all the **discovered** parts on the car.
+* Added the ability to toggle the fast examination of parts.
+* Known Issue: When entering and then exiting a vehicle, the window tint disappears and reappears on save/reload.
+* Fixed Bug: The window tint would turn off when the car paint was cycled. The tint would reappear on save/reload.
+* Fixed Bug: The Cycle Paint button would have to be pressed twice to tint windows and the tint would randomly turn off while driving.
 * **Some functions are only available to the Host in multiplayer.**
 
 ## FEATURES
@@ -16,6 +19,7 @@ A collection of cheats for the Car Mechanic Simulator 2027 Demo.
 * Add skill points to the player.
 * Max out the skills of the player. **(this now requires saving)**
 * Toggle fast mounting of parts.
+* Toggle fast examination of parts.
 * Set the Inventory to unlimited for the Player and Warehouses (Warehouse UI will show 200 limit still). **(HOST SETS FOR BOTH)**
 * Change the Game Speed.
 * Change the Player Walk and Run Speed. **(HOST SETS FOR BOTH)**
@@ -25,7 +29,7 @@ A collection of cheats for the Car Mechanic Simulator 2027 Demo.
 * Spawn the 7 available Demo cars (with or w/o random condition). **(HOST ONLY)**
 * **Maximum 10 cars allowed in the Demo**
 * Refresh the Used Parts Market immediately.
-* Toggle showing only the Unavailable body parts for Spawn car in the Used Parts Market.
+* Toggle showing only the Unavailable body parts for Spawn Car in the Used Parts Market.
 * Toggle the Demo World Limits to view more of the map .**(BOTH HOST & CLIENT MUST TOGGLE)**
 * Delete a car. **(HOST ONLY)**
 
@@ -36,6 +40,9 @@ A collection of cheats for the Car Mechanic Simulator 2027 Demo.
 * Move all items from the Shopping List to Shopping Cart with one key press. **(K)**
 * Add all car parts to the Shopping List from the Parts page of the Car with one key press. **(K)**
 * Mark all car parts from the Parts page of the Car with one key hold. **(HOLD K)**
+* Clear the entire Shopping List while on the Shop Home Page with one key hold **(HOLD K)**
+* Add all **discovered** car parts to the Shopping List on the Issues to Fix page with one key press. **(K)**
+* Mark all **discovered** car parts on the Issues to Fix page with one key hold. **(HOLD K)**
 
 ## DEFAULT KEYS
 * R: Opens the Demo Cheats menu.
@@ -45,6 +52,9 @@ A collection of cheats for the Car Mechanic Simulator 2027 Demo.
 * K: (Shopping List) While the Shopping List is open in a Shop moves all items to the Shopping Cart.
 * K: (Car Parts) Add all the car parts to the Shopping List while on the Car Info page.
 * K: (Car Parts) Long press to mark all car parts while on the Car Info page.
+* K: (Shop Home) Long press to clear the entire Shopping List.
+* K: (Issues to Fix) Add all **discovered** car parts to the Shopping List while on the Issues to Fix page.
+* K: (Issues to Fix) Long press to mark all **discovered** car parts while on the Issues to Fix page.
 * -: Lower the part condition to move by 10%. This value is saved in MinPartCondition value on exit.
 * =: Raise the part condition to move by 10%. This value is saved in MinPartCondition value on exit.
 
@@ -60,6 +70,7 @@ A collection of cheats for the Car Mechanic Simulator 2027 Demo.
 * WalkSpeed: 3.0
 * RunSpeed: 5.0
 * FastMount: false
+* FastExam: false
 * UnlimitedInventory: false
 * TransferAllItems: K
 * SetPartConditionLower: -

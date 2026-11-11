@@ -124,10 +124,10 @@ namespace DemoCheats
             {
                 Helpers.AdjustWalkSpeedUp(true);
             }, new DebugCommandAdditionalData { doNotCloseMenu = GameState.CurrentNetworkMode != GameNetworkMode.Client }));
-            commandList.Add(new DebugCommand("togglefastmount", "Toggle ON/OFF Fast Mounting of parts.", "Toggle Fast Mount", () =>
+            commandList.Add(new DebugCommand("toggleunlimitedinventory", "Toggle ON/OFF the Unlimited Inventory.", "Toggle Unlim. Inv.", () =>
             {
-                Helpers.ToggleFastMount();
-            }, new DebugCommandAdditionalData { doNotCloseMenu = true }));
+                Helpers.ToggleUnlimitedInventory();
+            }, new DebugCommandAdditionalData { doNotCloseMenu = GameState.CurrentNetworkMode != GameNetworkMode.Client }));
             commandList.Add(new DebugCommand("runspeeddown", "Turn down the Run Speed.", "Run-", () =>
             {
                 Helpers.AdjustRunSpeedUp(false);
@@ -136,11 +136,14 @@ namespace DemoCheats
             {
                 Helpers.AdjustRunSpeedUp(true);
             }, new DebugCommandAdditionalData { doNotCloseMenu = GameState.CurrentNetworkMode != GameNetworkMode.Client }));
-            commandList.Add(new DebugCommand("toggleunlimitedinventory", "Toggle ON/OFF the Unlimited Inventory.", "Toggle Unlim. Inv.", () =>
+            commandList.Add(new DebugCommand("togglefastmount", "Toggle ON/OFF Fast Mounting of parts.", "Toggle Fast Mount", () =>
             {
-                Helpers.ToggleUnlimitedInventory();
-            }, new DebugCommandAdditionalData { doNotCloseMenu = GameState.CurrentNetworkMode != GameNetworkMode.Client }));
-            commandList.Add(new DebugCommand("placeholder", "Placeholder", "Placeholder", null));
+                Helpers.ToggleFastMount();
+            }, new DebugCommandAdditionalData { doNotCloseMenu = true }));
+            commandList.Add(new DebugCommand("togglefastexam", "Toggle ON/OFF Fast Examination of parts.", "Toggle Fast Exam.", () =>
+            {
+                Helpers.ToggleFastExamination();
+            }));
             commandList.Add(new DebugCommand("paintcar", "Cycle through the factory paint colors.", "Cycle Car Paint", () =>
             {
                 Helpers.CyclePaintColors();
@@ -209,7 +212,7 @@ namespace DemoCheats
             int menuPadding = 15 * drawDoubleSizeFor4K;
 
             // Create the styles for the UI elements of the Menu.
-            GUIStyle labelStyle, /*sliderStyle, sliderStyleThumb, toggleStyle,*/ textStyle, buttoniStyle, toolTipStyle, boxStyle;
+            GUIStyle labelStyle, /*sliderStyle, sliderStyleThumb, toggleStyle,*/ textStyle, buttonStyle, toolTipStyle, boxStyle;
             labelStyle = new GUIStyle(GUI.skin.label);
             labelStyle.fontSize = 14 * drawDoubleSizeFor4K;
             labelStyle.fontStyle = FontStyle.Bold;
@@ -227,7 +230,7 @@ namespace DemoCheats
             textStyle = new GUIStyle(GUI.skin.textField);
             textStyle.fontSize = 14 * drawDoubleSizeFor4K;
 
-            buttoniStyle = new GUIStyle(GUI.skin.button)
+            buttonStyle = new GUIStyle(GUI.skin.button)
             {
                 fontSize = 13 * drawDoubleSizeFor4K,
                 fontStyle = FontStyle.Bold
@@ -250,7 +253,8 @@ namespace DemoCheats
             boxStyle.fontStyle = FontStyle.Bold;
             boxStyle.alignment = TextAnchor.UpperLeft;
             boxStyle.padding = new RectOffset(menuPadding, menuPadding, menuPadding, menuPadding);
-            // The menu box with the warning at the top-left.
+            // The Demo Cheats menu box with the warning at the top-left.
+            GUI.Box(new Rect(menuX, menuY, menuWidth, menuHeight), "", boxStyle);
             GUI.Box(new Rect(menuX, menuY, menuWidth, menuHeight), warning, boxStyle);
 
             // Close button in the top-right.
@@ -258,7 +262,7 @@ namespace DemoCheats
             if (closeCommand != null)
             {
                 string description = closeCommand.CommandDescription;
-                if (GUI.Button(new Rect((menuX + menuWidth) - (menuPadding * 3), menuY + menuPadding, buttonHeight, buttonHeight), new GUIContent(closeCommand.CommandFormat, description), buttoniStyle))
+                if (GUI.Button(new Rect((menuX + menuWidth) - (menuPadding * 3), menuY + menuPadding, buttonHeight, buttonHeight), new GUIContent(closeCommand.CommandFormat, description), buttonStyle))
                 {
                     if (closeCommand as DebugCommand != null)
                     {
@@ -311,7 +315,7 @@ namespace DemoCheats
                             break;
                     }
                     if (GUI.Button(new Rect(buttonX, rowY, buttonWidth, buttonHeight),
-                                   new GUIContent(command.CommandFormat, description), buttoniStyle))
+                                   new GUIContent(command.CommandFormat, description), buttonStyle))
                     {
                         if (command as DebugCommand != null)
                         {
@@ -354,7 +358,7 @@ namespace DemoCheats
                             break;
                     }
                     if (GUI.Button(new Rect(buttonX, rowY, buttonWidth, buttonHeight),
-                                   new GUIContent(command.CommandFormat, description), buttoniStyle))
+                                   new GUIContent(command.CommandFormat, description), buttonStyle))
                     {
                         if (command as DebugCommand != null)
                         {
@@ -395,7 +399,7 @@ namespace DemoCheats
                             break;
                     }
                     if (GUI.Button(new Rect(buttonX, rowY, buttonWidth, buttonHeight),
-                                   new GUIContent(command.CommandFormat, description), buttoniStyle))
+                                   new GUIContent(command.CommandFormat, description), buttonStyle))
                     {
                         if (command as DebugCommand != null)
                         {
@@ -413,24 +417,27 @@ namespace DemoCheats
 
             // Fourth Row of buttons
             // i = 13 is a Placeholder and not included
-            DebugCommandBase infintiteCommand = commandList[12] as DebugCommandBase;
-            if (infintiteCommand != null)
+            for (int i = 12; i < 14; i++)
             {
-                string description = infintiteCommand.CommandDescription;
-                int buttonX = 0;
-                buttonWidth = 160 * drawDoubleSizeFor4K;
-                buttonX = menuX + column1;
-                if (GUI.Button(new Rect(buttonX, rowY, buttonWidth, buttonHeight),
-                               new GUIContent(infintiteCommand.CommandFormat, description), buttoniStyle))
+                DebugCommandBase command = commandList[i] as DebugCommandBase;
+                if (command != null)
                 {
-                    if (infintiteCommand as DebugCommand != null)
+                    string description = command.CommandDescription;
+                    int buttonX = 0;
+                    buttonWidth = 160 * drawDoubleSizeFor4K;
+                    buttonX = menuX + (i % 2 == 0 ? column1 : column3);
+                    if (GUI.Button(new Rect(buttonX, rowY, buttonWidth, buttonHeight),
+                                   new GUIContent(command.CommandFormat, description), buttonStyle))
                     {
-                        if (infintiteCommand.AdditionalData.doNotCloseMenu == false)
+                        if (command as DebugCommand != null)
                         {
-                            ToggleCheatMenu();
+                            if (command.AdditionalData.doNotCloseMenu == false)
+                            {
+                                ToggleCheatMenu();
+                            }
+                            (command as DebugCommand).Invoke();
+                            return;
                         }
-                        (infintiteCommand as DebugCommand).Invoke();
-                        return;
                     }
                 }
             }
@@ -451,7 +458,7 @@ namespace DemoCheats
                     buttonWidth = 160 * drawDoubleSizeFor4K;
                     buttonX = menuX + (i % 2 == 0 ? column1 : column3);
                     if (GUI.Button(new Rect(buttonX, rowY, buttonWidth, buttonHeight),
-                                   new GUIContent(command.CommandFormat, description), buttoniStyle))
+                                   new GUIContent(command.CommandFormat, description), buttonStyle))
                     {
                         if (command as DebugCommand != null)
                         {
@@ -482,7 +489,7 @@ namespace DemoCheats
                     buttonWidth = 160 * drawDoubleSizeFor4K;
                     buttonX = menuX + (i % 2 == 0 ? column1 : column3);
                     if (GUI.Button(new Rect(buttonX, rowY, buttonWidth, buttonHeight),
-                                   new GUIContent(command.CommandFormat, description), buttoniStyle))
+                                   new GUIContent(command.CommandFormat, description), buttonStyle))
                     {
                         if (command as DebugCommand != null)
                         {
@@ -513,7 +520,7 @@ namespace DemoCheats
                     buttonWidth = 160 * drawDoubleSizeFor4K;
                     buttonX = menuX + (i % 2 == 0 ? column1 : column3);
                     if (GUI.Button(new Rect(buttonX, rowY, buttonWidth, buttonHeight),
-                                   new GUIContent(command.CommandFormat, description), buttoniStyle))
+                                   new GUIContent(command.CommandFormat, description), buttonStyle))
                     {
                         if (command as DebugCommand != null)
                         {
@@ -544,7 +551,7 @@ namespace DemoCheats
                     buttonWidth = 160 * drawDoubleSizeFor4K;
                     buttonX = menuX + (i % 2 == 0 ? column1 : column3);
                     if (GUI.Button(new Rect(buttonX, rowY, buttonWidth, buttonHeight),
-                                   new GUIContent(command.CommandFormat, description), buttoniStyle))
+                                   new GUIContent(command.CommandFormat, description), buttonStyle))
                     {
                         if (command as DebugCommand != null)
                         {
